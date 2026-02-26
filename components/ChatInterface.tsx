@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import ReactMarkdown from 'react-markdown';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -9,7 +9,6 @@ import {
   Plus, 
   MessageSquare, 
   MoreVertical, 
-  User, 
   Sparkles,
   Menu,
   X,
@@ -18,7 +17,10 @@ import {
   History,
   Copy,
   Check,
-  RotateCcw
+  RotateCcw,
+  Mic,
+  Image as ImageIcon,
+  Code
 } from 'lucide-react';
 
 // Initialize Gemini
@@ -36,15 +38,34 @@ export default function ChatInterface() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [showTools, setShowTools] = useState(false);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  // Handle responsive sidebar
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      if (mobile) {
+        setIsSidebarOpen(false);
+      } else {
+        setIsSidebarOpen(true);
+      }
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
   };
-  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -73,7 +94,7 @@ export default function ChatInterface() {
       const chat = genAI.chats.create({
         model: "gemini-3-flash-preview",
         config: {
-          systemInstruction: "You are a helpful, creative, and friendly AI assistant. Your responses should be clear, concise, and formatted nicely using Markdown where appropriate.",
+          systemInstruction: "You are Yun-Zhi, a helpful, creative, and friendly AI assistant. Your responses should be clear, concise, and formatted nicely using Markdown where appropriate.",
         },
         history: messages.map(m => ({
           role: m.role,
@@ -118,10 +139,24 @@ export default function ChatInterface() {
   const startNewChat = () => {
     setMessages([]);
     setInput('');
+    if (isMobile) setIsSidebarOpen(false);
   };
 
   return (
-    <div className="flex h-screen bg-white overflow-hidden">
+    <div className="flex h-screen bg-white overflow-hidden font-sans">
+      {/* Mobile Backdrop */}
+      <AnimatePresence>
+        {isMobile && isSidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsSidebarOpen(false)}
+            className="fixed inset-0 bg-black/20 z-40 lg:hidden backdrop-blur-sm"
+          />
+        )}
+      </AnimatePresence>
+
       {/* Sidebar */}
       <AnimatePresence mode="wait">
         {isSidebarOpen && (
@@ -129,10 +164,18 @@ export default function ChatInterface() {
             initial={{ x: -300, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -300, opacity: 0 }}
-            transition={{ type: 'spring', damping: 20, stiffness: 100 }}
-            className="w-72 bg-zinc-50 border-r border-zinc-200 flex flex-col z-20"
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className={`
+              fixed lg:relative inset-y-0 left-0 z-50
+              w-72 bg-zinc-50 border-r border-zinc-200 flex flex-col
+              shadow-xl lg:shadow-none
+            `}
           >
             <div className="p-4 flex items-center justify-between">
+              <div className="lg:hidden flex items-center gap-2 text-zinc-500">
+                <Menu size={20} />
+                <span className="font-medium">Menu</span>
+              </div>
               <button 
                 onClick={() => setIsSidebarOpen(false)}
                 className="p-2 hover:bg-zinc-200 rounded-full transition-colors lg:hidden"
@@ -141,13 +184,13 @@ export default function ChatInterface() {
               </button>
             </div>
 
-            <div className="px-3 mb-4">
+            <div className="px-3 mb-4 mt-2 lg:mt-6">
               <button 
                 onClick={startNewChat}
-                className="w-full flex items-center gap-3 px-4 py-3 bg-zinc-200/50 hover:bg-zinc-200 rounded-full transition-colors text-zinc-700 font-medium"
+                className="w-full flex items-center gap-3 px-4 py-3 bg-zinc-200/50 hover:bg-zinc-200 rounded-full transition-all hover:shadow-md text-zinc-700 font-medium group"
               >
-                <Plus size={20} />
-                <span>Chat Baru</span>
+                <Plus size={20} className="text-zinc-500 group-hover:text-zinc-800 transition-colors" />
+                <span className="group-hover:text-zinc-900">Chat Baru</span>
               </button>
             </div>
 
@@ -156,12 +199,12 @@ export default function ChatInterface() {
                 Terbaru
               </div>
               {/* Mock history for UI demo */}
-              <button className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-200 rounded-lg transition-colors text-sm text-zinc-600 text-left truncate">
-                <MessageSquare size={16} className="shrink-0" />
+              <button className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-200 rounded-lg transition-colors text-sm text-zinc-600 text-left truncate group">
+                <MessageSquare size={16} className="shrink-0 text-zinc-400 group-hover:text-zinc-600" />
                 <span className="truncate">Apa itu Next.js?</span>
               </button>
-              <button className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-200 rounded-lg transition-colors text-sm text-zinc-600 text-left truncate">
-                <MessageSquare size={16} className="shrink-0" />
+              <button className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-200 rounded-lg transition-colors text-sm text-zinc-600 text-left truncate group">
+                <MessageSquare size={16} className="shrink-0 text-zinc-400 group-hover:text-zinc-600" />
                 <span className="truncate">Resep Nasi Goreng</span>
               </button>
             </div>
@@ -185,20 +228,20 @@ export default function ChatInterface() {
       </AnimatePresence>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col relative min-w-0">
+      <main className="flex-1 flex flex-col relative min-w-0 h-full">
         {/* Header */}
-        <header className="h-16 flex items-center justify-between px-4 border-b border-transparent">
+        <header className="h-16 flex items-center justify-between px-4 border-b border-transparent shrink-0">
           <div className="flex items-center gap-2">
             {!isSidebarOpen && (
               <button 
                 onClick={() => setIsSidebarOpen(true)}
-                className="p-2 hover:bg-zinc-100 rounded-full transition-colors"
+                className="p-2 hover:bg-zinc-100 rounded-full transition-colors text-zinc-600"
               >
                 <Menu size={20} />
               </button>
             )}
             <div className="flex items-center gap-2 px-2">
-              <span className="text-xl font-medium text-zinc-800 tracking-tight">Gemini</span>
+              <span className="text-xl font-medium text-zinc-800 tracking-tight">Yun-Zhi</span>
               <span className="text-xs bg-zinc-100 px-1.5 py-0.5 rounded text-zinc-500 font-medium">Flash</span>
             </div>
           </div>
@@ -206,7 +249,7 @@ export default function ChatInterface() {
             <button className="p-2 hover:bg-zinc-100 rounded-full transition-colors text-zinc-600">
               <Sparkles size={20} />
             </button>
-            <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold">
+            <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-sm ring-2 ring-indigo-100">
               U
             </div>
           </div>
@@ -225,34 +268,35 @@ export default function ChatInterface() {
                 className="space-y-6"
               >
                 <h1 className="text-4xl md:text-5xl font-medium text-zinc-800 tracking-tight">
-                  Halo, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">User</span>
+                  Halo, <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600">User</span>
                 </h1>
                 <p className="text-xl md:text-2xl text-zinc-400 font-light max-w-xl">
-                  Ada yang bisa saya bantu hari ini?
+                  Saya Yun-Zhi, asisten AI Anda. Ada yang bisa saya bantu?
                 </p>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-12">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-12 w-full">
                   {[
-                    "Bantu saya menulis email profesional",
-                    "Jelaskan konsep kuantum fisika",
-                    "Ide kado untuk ulang tahun teman",
-                    "Buat rencana perjalanan ke Bali"
-                  ].map((suggestion, i) => (
+                    { icon: <Code size={20} />, text: "Debug kode React" },
+                    { icon: <ImageIcon size={20} />, text: "Analisis gambar" },
+                    { icon: <MessageSquare size={20} />, text: "Buat caption Instagram" },
+                    { icon: <Sparkles size={20} />, text: "Ide bisnis kreatif" }
+                  ].map((item, i) => (
                     <button
                       key={i}
-                      onClick={() => {
-                        setInput(suggestion);
-                      }}
-                      className="p-4 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 rounded-2xl text-left text-sm text-zinc-600 transition-all hover:shadow-sm"
+                      onClick={() => setInput(item.text)}
+                      className="flex items-center gap-3 p-4 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 rounded-xl text-left text-sm text-zinc-600 transition-all hover:scale-[1.02] hover:shadow-md active:scale-95"
                     >
-                      {suggestion}
+                      <div className="p-2 bg-white rounded-lg shadow-sm text-indigo-500">
+                        {item.icon}
+                      </div>
+                      <span>{item.text}</span>
                     </button>
                   ))}
                 </div>
               </motion.div>
             </div>
           ) : (
-            <div className="max-w-3xl mx-auto py-8 px-4 space-y-10">
+            <div className="max-w-3xl mx-auto py-8 px-4 space-y-10 pb-32">
               {messages.map((message) => (
                 <div key={message.id} className="group flex gap-4 md:gap-6">
                   <div className="shrink-0 mt-1">
@@ -261,14 +305,14 @@ export default function ChatInterface() {
                         U
                       </div>
                     ) : (
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white shadow-sm">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-sm">
                         <Sparkles size={16} />
                       </div>
                     )}
                   </div>
                   <div className="flex-1 space-y-2 min-w-0">
                     <div className="font-medium text-sm text-zinc-900">
-                      {message.role === 'user' ? 'Anda' : 'Gemini'}
+                      {message.role === 'user' ? 'Anda' : 'Yun-Zhi'}
                     </div>
                     <div className="prose prose-zinc max-w-none text-zinc-700 leading-relaxed">
                       <ReactMarkdown>{message.content}</ReactMarkdown>
@@ -284,7 +328,13 @@ export default function ChatInterface() {
                         </button>
                         <button 
                           className="p-1.5 hover:bg-zinc-100 rounded-md text-zinc-500 transition-colors"
-                          title="Bagikan"
+                          title="Putar ulang"
+                        >
+                          <RotateCcw size={16} />
+                        </button>
+                        <button 
+                          className="p-1.5 hover:bg-zinc-100 rounded-md text-zinc-500 transition-colors"
+                          title="Lainnya"
                         >
                           <MoreVertical size={16} />
                         </button>
@@ -311,12 +361,20 @@ export default function ChatInterface() {
         </div>
 
         {/* Input Area */}
-        <div className="p-4 md:p-6 bg-white">
+        <div className="p-4 md:p-6 bg-white border-t border-zinc-100">
           <div className="max-w-3xl mx-auto relative">
             <form 
               onSubmit={handleSubmit}
-              className="relative flex items-end gap-2 bg-zinc-100 rounded-3xl p-2 pl-4 pr-2 focus-within:bg-zinc-50 focus-within:ring-1 focus-within:ring-zinc-200 transition-all"
+              className="relative flex items-end gap-2 bg-zinc-100 rounded-2xl p-2 focus-within:bg-zinc-50 focus-within:ring-2 focus-within:ring-zinc-200 transition-all shadow-sm"
             >
+              <button
+                type="button"
+                className="p-3 text-zinc-500 hover:bg-zinc-200 rounded-xl transition-colors shrink-0"
+                title="Upload file"
+              >
+                <Plus size={20} />
+              </button>
+
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -326,9 +384,9 @@ export default function ChatInterface() {
                     handleSubmit();
                   }
                 }}
-                placeholder="Ketik pesan di sini..."
+                placeholder="Tanya sesuatu pada Yun-Zhi..."
                 rows={1}
-                className="flex-1 bg-transparent border-none focus:ring-0 py-3 resize-none text-zinc-800 placeholder:text-zinc-500 max-h-60"
+                className="flex-1 bg-transparent border-none focus:ring-0 py-3 resize-none text-zinc-800 placeholder:text-zinc-500 max-h-60 min-h-[48px]"
                 style={{ height: 'auto' }}
                 onInput={(e) => {
                   const target = e.target as HTMLTextAreaElement;
@@ -336,14 +394,37 @@ export default function ChatInterface() {
                   target.style.height = `${target.scrollHeight}px`;
                 }}
               />
+              
               <div className="flex items-center gap-1 pb-1">
+                 <button
+                  type="button"
+                  onClick={() => setShowTools(!showTools)}
+                  className="p-2 text-zinc-500 hover:bg-zinc-200 rounded-xl transition-colors relative"
+                  title="Tools"
+                >
+                  <Mic size={20} />
+                  {showTools && (
+                    <div className="absolute bottom-full right-0 mb-2 w-48 bg-white rounded-xl shadow-lg border border-zinc-100 p-2 flex flex-col gap-1 z-50">
+                      <div className="text-xs font-semibold text-zinc-400 px-2 py-1">Fitur</div>
+                      <button className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-50 rounded-lg text-sm text-zinc-600 text-left">
+                        <ImageIcon size={16} />
+                        <span>Analisis Gambar</span>
+                      </button>
+                      <button className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-50 rounded-lg text-sm text-zinc-600 text-left">
+                        <Code size={16} />
+                        <span>Code Interpreter</span>
+                      </button>
+                    </div>
+                  )}
+                </button>
+
                 <button
                   type="submit"
                   disabled={!input.trim() || isLoading}
-                  className={`p-2 rounded-full transition-all ${
+                  className={`p-2 rounded-xl transition-all ${
                     input.trim() && !isLoading 
-                      ? 'bg-zinc-800 text-white hover:bg-zinc-700' 
-                      : 'text-zinc-400 cursor-not-allowed'
+                      ? 'bg-zinc-900 text-white hover:bg-zinc-700 shadow-md hover:scale-105 active:scale-95' 
+                      : 'bg-zinc-200 text-zinc-400 cursor-not-allowed'
                   }`}
                 >
                   <Send size={20} />
@@ -351,7 +432,7 @@ export default function ChatInterface() {
               </div>
             </form>
             <p className="text-[10px] text-zinc-400 text-center mt-3 px-4">
-              Gemini dapat menampilkan informasi yang tidak akurat, termasuk tentang orang, jadi periksa kembali responsnya.
+              Yun-Zhi dapat menampilkan informasi yang tidak akurat, termasuk tentang orang, jadi periksa kembali responsnya.
             </p>
           </div>
         </div>
