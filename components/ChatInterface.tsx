@@ -273,26 +273,6 @@ export default function ChatInterface() {
                 <p className="text-xl md:text-2xl text-zinc-400 font-light max-w-xl">
                   Saya Yun-Zhi, asisten AI Anda. Ada yang bisa saya bantu?
                 </p>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-12 w-full">
-                  {[
-                    { icon: <Code size={20} />, text: "Debug kode React" },
-                    { icon: <ImageIcon size={20} />, text: "Analisis gambar" },
-                    { icon: <MessageSquare size={20} />, text: "Buat caption Instagram" },
-                    { icon: <Sparkles size={20} />, text: "Ide bisnis kreatif" }
-                  ].map((item, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setInput(item.text)}
-                      className="flex items-center gap-3 p-4 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 rounded-xl text-left text-sm text-zinc-600 transition-all hover:scale-[1.02] hover:shadow-md active:scale-95"
-                    >
-                      <div className="p-2 bg-white rounded-lg shadow-sm text-indigo-500">
-                        {item.icon}
-                      </div>
-                      <span>{item.text}</span>
-                    </button>
-                  ))}
-                </div>
               </motion.div>
             </div>
           ) : (
