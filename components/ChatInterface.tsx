@@ -296,7 +296,7 @@ export default function ChatInterface() {
               </motion.div>
             </div>
           ) : (
-            <div className="max-w-3xl mx-auto py-8 px-4 space-y-6 pb-32">
+            <div className="max-w-3xl mx-auto py-8 px-4 space-y-8 pb-32">
               {messages.map((message) => (
                 <div 
                   key={message.id} 
@@ -304,13 +304,13 @@ export default function ChatInterface() {
                     message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
                   }`}
                 >
-                  <div className="shrink-0 mt-auto">
+                  <div className="shrink-0 mt-1">
                     {message.role === 'user' ? (
-                      <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-sm hidden sm:flex">
+                      <div className="w-8 h-8 rounded-full bg-zinc-200 flex items-center justify-center text-zinc-500 text-xs font-bold hidden sm:flex">
                         U
                       </div>
                     ) : (
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-sm">
+                      <div className="w-8 h-8 rounded-full border border-zinc-200 flex items-center justify-center text-indigo-600 shadow-sm bg-white">
                         <Sparkles size={16} />
                       </div>
                     )}
@@ -319,20 +319,16 @@ export default function ChatInterface() {
                     message.role === 'user' ? 'items-end' : 'items-start'
                   }`}>
                     <div className={`
-                      max-w-[85%] sm:max-w-[75%] rounded-2xl px-5 py-3.5 shadow-sm
-                      ${message.role === 'user' 
-                        ? 'bg-indigo-600 text-white rounded-br-sm' 
-                        : 'bg-zinc-100 text-zinc-800 rounded-bl-sm'
-                      }
+                      max-w-[90%] sm:max-w-[85%] px-2
                     `}>
                       <div className={`prose max-w-none leading-relaxed ${
-                        message.role === 'user' ? 'prose-invert' : 'prose-zinc'
+                        message.role === 'user' ? 'prose-zinc text-zinc-800 text-right' : 'prose-zinc text-zinc-800'
                       }`}>
                         <ReactMarkdown>{message.content}</ReactMarkdown>
                       </div>
                     </div>
                     {message.role === 'model' && message.content && (
-                      <div className="flex items-center gap-2 pt-1 pl-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-2 pt-2 pl-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button 
                           onClick={() => copyToClipboard(message.content, message.id)}
                           className="p-1.5 hover:bg-zinc-100 rounded-md text-zinc-400 hover:text-zinc-600 transition-colors"
@@ -359,12 +355,12 @@ export default function ChatInterface() {
               ))}
               {isLoading && messages[messages.length - 1]?.role === 'user' && (
                 <div className="flex gap-4 md:gap-6">
-                  <div className="shrink-0 mt-auto">
-                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-sm">
+                  <div className="shrink-0 mt-1">
+                     <div className="w-8 h-8 rounded-full border border-zinc-200 flex items-center justify-center text-indigo-600 shadow-sm bg-white">
                         <Sparkles size={16} />
                       </div>
                   </div>
-                  <div className="bg-zinc-100 rounded-2xl rounded-bl-sm px-5 py-4 shadow-sm">
+                  <div className="px-2 py-2">
                     <div className="flex gap-1.5">
                       <motion.div 
                         animate={{ scale: [1, 1.2, 1] }} 
@@ -391,20 +387,12 @@ export default function ChatInterface() {
         </div>
 
         {/* Input Area */}
-        <div className="p-4 bg-white border-t border-zinc-100">
-          <div className="max-w-3xl mx-auto relative">
+        <div className="p-4 bg-white">
+          <div className="max-w-3xl mx-auto">
             <form 
               onSubmit={handleSubmit}
-              className="relative flex items-center gap-2 bg-zinc-100 rounded-[28px] px-2 py-2 transition-all shadow-sm min-h-[64px]"
+              className="bg-zinc-100 rounded-[32px] p-3 shadow-sm focus-within:ring-1 focus-within:ring-zinc-200 transition-all"
             >
-              <button
-                type="button"
-                className="p-3 text-zinc-500 hover:bg-zinc-200 rounded-full transition-colors shrink-0"
-                title="Upload file"
-              >
-                <Plus size={24} />
-              </button>
-
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -414,9 +402,9 @@ export default function ChatInterface() {
                     handleSubmit();
                   }
                 }}
-                placeholder="Tanya sesuatu pada Yun-Zhi..."
+                placeholder="Tanyakan apa saja"
                 rows={1}
-                className="flex-1 bg-transparent border-none focus:ring-0 focus:outline-none py-3 px-2 resize-none text-zinc-800 placeholder:text-zinc-500 max-h-60 min-h-[24px] text-base"
+                className="w-full bg-transparent border-none focus:ring-0 focus:outline-none px-2 resize-none text-zinc-800 placeholder:text-zinc-500 min-h-[24px] max-h-60 text-base mb-2"
                 style={{ height: 'auto' }}
                 onInput={(e) => {
                   const target = e.target as HTMLTextAreaElement;
@@ -425,45 +413,51 @@ export default function ChatInterface() {
                 }}
               />
               
-              <div className="flex items-center gap-1">
-                 <button
-                  type="button"
-                  onClick={() => setShowTools(!showTools)}
-                  className="p-3 text-zinc-500 hover:bg-zinc-200 rounded-full transition-colors relative"
-                  title="Tools"
-                >
-                  <Mic size={24} />
-                  {showTools && (
-                    <div className="absolute bottom-full right-0 mb-4 w-48 bg-white rounded-xl shadow-lg border border-zinc-100 p-2 flex flex-col gap-1 z-50">
-                      <div className="text-xs font-semibold text-zinc-400 px-2 py-1">Fitur</div>
-                      <button className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-50 rounded-lg text-sm text-zinc-600 text-left">
-                        <ImageIcon size={16} />
-                        <span>Analisis Gambar</span>
-                      </button>
-                      <button className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-50 rounded-lg text-sm text-zinc-600 text-left">
-                        <Code size={16} />
-                        <span>Code Interpreter</span>
-                      </button>
-                    </div>
-                  )}
-                </button>
+              <div className="flex items-center justify-between pl-1">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="p-2 text-zinc-500 hover:bg-zinc-200 rounded-full transition-colors"
+                    title="Upload file"
+                  >
+                    <Plus size={20} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowTools(!showTools)}
+                    className="p-2 text-zinc-500 hover:bg-zinc-200 rounded-full transition-colors relative"
+                    title="Tools"
+                  >
+                    <Mic size={20} />
+                    {showTools && (
+                      <div className="absolute bottom-full left-0 mb-2 w-48 bg-white rounded-xl shadow-lg border border-zinc-100 p-2 flex flex-col gap-1 z-50">
+                        <div className="text-xs font-semibold text-zinc-400 px-2 py-1">Fitur</div>
+                        <button className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-50 rounded-lg text-sm text-zinc-600 text-left">
+                          <ImageIcon size={16} />
+                          <span>Analisis Gambar</span>
+                        </button>
+                        <button className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-50 rounded-lg text-sm text-zinc-600 text-left">
+                          <Code size={16} />
+                          <span>Code Interpreter</span>
+                        </button>
+                      </div>
+                    )}
+                  </button>
+                </div>
 
                 <button
                   type="submit"
                   disabled={!input.trim() || isLoading}
-                  className={`p-3 rounded-full transition-all ${
+                  className={`p-2 rounded-full transition-all ${
                     input.trim() && !isLoading 
-                      ? 'bg-zinc-900 text-white hover:bg-zinc-700 shadow-md hover:scale-105 active:scale-95' 
-                      : 'bg-zinc-200 text-zinc-400 cursor-not-allowed'
+                      ? 'bg-zinc-900 text-white hover:bg-zinc-700 shadow-md' 
+                      : 'bg-zinc-300 text-zinc-500 cursor-not-allowed'
                   }`}
                 >
-                  <Send size={24} />
+                  <Send size={20} />
                 </button>
               </div>
             </form>
-            <p className="text-[10px] text-zinc-400 text-center mt-3 px-4">
-              Yun-Zhi dapat menampilkan informasi yang tidak akurat, termasuk tentang orang, jadi periksa kembali responsnya.
-            </p>
           </div>
         </div>
       </main>
