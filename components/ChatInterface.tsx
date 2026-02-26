@@ -143,7 +143,7 @@ export default function ChatInterface() {
   };
 
   return (
-    <div className="flex h-screen bg-white overflow-hidden font-sans">
+    <div className="flex h-full bg-white overflow-hidden font-sans">
       {/* Mobile Backdrop */}
       <AnimatePresence>
         {isMobile && isSidebarOpen && (
@@ -367,7 +367,7 @@ export default function ChatInterface() {
         </div>
 
         {/* Input Area */}
-        <div className="p-4 bg-white">
+        <div className="p-4 bg-white shrink-0">
           <div className="max-w-3xl mx-auto">
             <form 
               onSubmit={handleSubmit}
