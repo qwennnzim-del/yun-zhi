@@ -1,20 +1,37 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Yun-Zhi
 
-# Run and deploy your AI Studio app
+A minimal, white chatbot interface inspired by Google Gemini, built with Next.js, Tailwind CSS, and the Gemini API.
 
-This contains everything you need to run your app locally.
+## Deployment to Vercel
 
-View your app in AI Studio: https://ai.studio/apps/4a68423b-c20c-4a4c-a912-cb4503640ba7
+To deploy this project to Vercel, follow these steps:
 
-## Run Locally
+1.  **Push to GitHub**: Push this repository to your GitHub account.
+2.  **Import in Vercel**:
+    *   Go to [Vercel Dashboard](https://vercel.com/dashboard).
+    *   Click **Add New...** > **Project**.
+    *   Import the `yun-zhi` repository.
+3.  **Configure Project**:
+    *   Framework Preset: **Next.js** (should be detected automatically).
+    *   Root Directory: `./` (default).
+4.  **Environment Variables**:
+    *   Expand the **Environment Variables** section.
+    *   Add the following variable:
+        *   **Key**: `NEXT_PUBLIC_GEMINI_API_KEY`
+        *   **Value**: Your Google Gemini API Key (get it from [Google AI Studio](https://aistudio.google.com/)).
+5.  **Deploy**: Click **Deploy**.
 
-**Prerequisites:**  Node.js
+## Development
 
+To run locally:
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+```bash
+npm install
+npm run dev
+```
+
+Create a `.env.local` file with:
+
+```env
+NEXT_PUBLIC_GEMINI_API_KEY=your_api_key_here
+```
