@@ -1,0 +1,5 @@
+{
+  "name": "Gemini Clone",
+  "description": "A minimal, white chatbot interface inspired by Google Gemini.",
+  "requestFramePermissions": []
+}
