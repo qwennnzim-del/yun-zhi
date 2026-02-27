@@ -76,6 +76,10 @@ export default function ChatInterface() {
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showHelpPopup, setShowHelpPopup] = useState(false);
+  
+  // Model selection state
+  const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash-latest');
+  const [showModelSelector, setShowModelSelector] = useState(false);
 
   // File upload state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -221,7 +225,7 @@ export default function ChatInterface() {
       }
 
       const chat = genAI.chats.create({
-        model: "gemini-3-flash-preview",
+        model: selectedModel,
         config: {
           systemInstruction: "You are Yun-Zhi, an advanced AI assistant developed by M Fariz Alfauzi at Zent Technology Inc. You are helpful, creative, and friendly. Your responses should be clear, concise, and formatted nicely using Markdown where appropriate.",
         },
@@ -440,6 +444,90 @@ export default function ChatInterface() {
         )}
       </AnimatePresence>
 
+      {/* Model Selector Bottom Sheet */}
+      <AnimatePresence>
+        {showModelSelector && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowModelSelector(false)}
+              className="fixed inset-0 bg-black/20 z-[60] backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed bottom-0 left-0 right-0 z-[70] bg-white rounded-t-3xl shadow-2xl border-t border-zinc-200 p-6 md:max-w-md md:mx-auto md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:rounded-3xl"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-zinc-900">Pilih Model AI</h3>
+                <button 
+                  onClick={() => setShowModelSelector(false)}
+                  className="p-2 bg-zinc-100 hover:bg-zinc-200 rounded-full text-zinc-600 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              
+              <div className="space-y-3">
+                <button
+                  onClick={() => {
+                    setSelectedModel('gemini-2.5-flash-latest');
+                    setShowModelSelector(false);
+                  }}
+                  className={`w-full flex items-start gap-4 p-4 rounded-2xl border transition-all ${
+                    selectedModel === 'gemini-2.5-flash-latest' 
+                      ? 'border-indigo-500 bg-indigo-50/50' 
+                      : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
+                  }`}
+                >
+                  <div className={`mt-1 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                    selectedModel === 'gemini-2.5-flash-latest' ? 'border-indigo-500' : 'border-zinc-300'
+                  }`}>
+                    {selectedModel === 'gemini-2.5-flash-latest' && <div className="w-2.5 h-2.5 bg-indigo-500 rounded-full" />}
+                  </div>
+                  <div className="text-left">
+                    <div className="font-semibold text-zinc-900 flex items-center gap-2">
+                      Yun-Zhi 2.5
+                      <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Default</span>
+                    </div>
+                    <div className="text-sm text-zinc-500 mt-1">Model cepat dan efisien untuk tugas sehari-hari. Gratis digunakan.</div>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setSelectedModel('gemini-3-flash-preview');
+                    setShowModelSelector(false);
+                  }}
+                  className={`w-full flex items-start gap-4 p-4 rounded-2xl border transition-all ${
+                    selectedModel === 'gemini-3-flash-preview' 
+                      ? 'border-indigo-500 bg-indigo-50/50' 
+                      : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
+                  }`}
+                >
+                  <div className={`mt-1 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                    selectedModel === 'gemini-3-flash-preview' ? 'border-indigo-500' : 'border-zinc-300'
+                  }`}>
+                    {selectedModel === 'gemini-3-flash-preview' && <div className="w-2.5 h-2.5 bg-indigo-500 rounded-full" />}
+                  </div>
+                  <div className="text-left">
+                    <div className="font-semibold text-zinc-900 flex items-center gap-2">
+                      Yun-Zhi 3
+                      <span className="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Preview</span>
+                    </div>
+                    <div className="text-sm text-zinc-500 mt-1">Model terbaru dengan kemampuan penalaran lebih tinggi. Gratis digunakan.</div>
+                  </div>
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* Main Content */}
       <main className="flex-1 flex flex-col relative min-w-0 h-full">
         {/* Header */}
@@ -455,13 +543,17 @@ export default function ChatInterface() {
             )}
             <div className="flex items-center gap-2 px-2">
               <span className="text-xl font-medium text-zinc-800 tracking-tight">Yun-Zhi</span>
-              <span className="text-xs bg-zinc-100 px-1.5 py-0.5 rounded text-zinc-500 font-medium">Zent AI</span>
+              <button 
+                onClick={() => setShowModelSelector(true)}
+                className="flex items-center gap-1.5 text-xs bg-zinc-100 hover:bg-zinc-200 px-2.5 py-1.5 rounded-lg text-zinc-600 font-medium transition-colors"
+              >
+                <Sparkles size={14} className="text-indigo-500" />
+                {selectedModel === 'gemini-3-flash-preview' ? 'Yun-Zhi 3' : 'Yun-Zhi 2.5'}
+                <ChevronUp size={14} className="rotate-180 text-zinc-400" />
+              </button>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button className="p-2 hover:bg-zinc-100 rounded-full transition-colors text-zinc-600">
-              <Sparkles size={20} />
-            </button>
             <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-sm ring-2 ring-indigo-100">
               U
             </div>
