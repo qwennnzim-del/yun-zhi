@@ -24,7 +24,11 @@ import {
   Mic,
   Image as ImageIcon,
   Code,
-  Wand2
+  Wand2,
+  Search,
+  BookOpen,
+  Shield,
+  ChevronUp
 } from 'lucide-react';
 
 // Initialize Gemini
@@ -70,6 +74,8 @@ export default function ChatInterface() {
   // Firebase state
   const [chatHistory, setChatHistory] = useState<{id: string, title: string}[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showHelpPopup, setShowHelpPopup] = useState(false);
 
   // File upload state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -337,11 +343,22 @@ export default function ChatInterface() {
             <div className="px-3 mb-4 mt-2 lg:mt-6">
               <button 
                 onClick={startNewChat}
-                className="w-full flex items-center gap-3 px-4 py-3 bg-zinc-200/50 hover:bg-zinc-200 rounded-full transition-all hover:shadow-md text-zinc-700 font-medium group"
+                className="w-full flex items-center gap-3 px-4 py-3 bg-zinc-200/50 hover:bg-zinc-200 rounded-full transition-all hover:shadow-md text-zinc-700 font-medium group mb-4"
               >
                 <Plus size={20} className="text-zinc-500 group-hover:text-zinc-800 transition-colors" />
                 <span className="group-hover:text-zinc-900">Chat Baru</span>
               </button>
+
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+                <input 
+                  type="text" 
+                  placeholder="Cari percakapan..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-zinc-200/50 border-none rounded-lg pl-9 pr-3 py-2 text-sm focus:ring-1 focus:ring-zinc-300 outline-none text-zinc-700 placeholder:text-zinc-400 transition-all"
+                />
+              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto px-3 space-y-1">
@@ -351,26 +368,58 @@ export default function ChatInterface() {
               {chatHistory.length === 0 ? (
                 <div className="px-4 py-2 text-sm text-zinc-400 italic">Belum ada percakapan</div>
               ) : (
-                chatHistory.map((chat) => (
-                  <button 
-                    key={chat.id}
-                    onClick={() => loadChat(chat.id)}
-                    className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm text-left truncate group ${
-                      currentChatId === chat.id ? 'bg-zinc-200 text-zinc-900 font-medium' : 'hover:bg-zinc-200 text-zinc-600'
-                    }`}
-                  >
-                    <MessageSquare size={16} className={`shrink-0 ${currentChatId === chat.id ? 'text-zinc-600' : 'text-zinc-400 group-hover:text-zinc-600'}`} />
-                    <span className="truncate">{chat.title}</span>
-                  </button>
-                ))
+                chatHistory.filter(chat => chat.title.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 ? (
+                  <div className="px-4 py-2 text-sm text-zinc-400 italic">Tidak ditemukan</div>
+                ) : (
+                  chatHistory.filter(chat => chat.title.toLowerCase().includes(searchQuery.toLowerCase())).map((chat) => (
+                    <button 
+                      key={chat.id}
+                      onClick={() => loadChat(chat.id)}
+                      className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm text-left truncate group ${
+                        currentChatId === chat.id ? 'bg-zinc-200 text-zinc-900 font-medium' : 'hover:bg-zinc-200 text-zinc-600'
+                      }`}
+                    >
+                      <MessageSquare size={16} className={`shrink-0 ${currentChatId === chat.id ? 'text-zinc-600' : 'text-zinc-400 group-hover:text-zinc-600'}`} />
+                      <span className="truncate">{chat.title}</span>
+                    </button>
+                  ))
+                )
               )}
             </div>
 
             <div className="p-3 border-t border-zinc-200 space-y-1">
-              <button className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-200 rounded-lg transition-colors text-sm text-zinc-600">
-                <HelpCircle size={18} />
-                <span>Bantuan</span>
-              </button>
+              <div className="relative">
+                <button 
+                  onClick={() => setShowHelpPopup(!showHelpPopup)}
+                  className="w-full flex items-center justify-between px-4 py-2 hover:bg-zinc-200 rounded-lg transition-colors text-sm text-zinc-600"
+                >
+                  <div className="flex items-center gap-3">
+                    <HelpCircle size={18} />
+                    <span>Bantuan</span>
+                  </div>
+                  <ChevronUp size={16} className={`transition-transform ${showHelpPopup ? 'rotate-180' : ''}`} />
+                </button>
+                
+                <AnimatePresence>
+                  {showHelpPopup && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="absolute bottom-full left-0 mb-2 w-full bg-white rounded-xl shadow-lg border border-zinc-100 p-2 flex flex-col gap-1 z-50"
+                    >
+                      <Link href="/help?tab=faq" className="flex items-center gap-3 px-3 py-2 hover:bg-zinc-50 rounded-lg text-sm text-zinc-600 transition-colors">
+                        <BookOpen size={16} className="text-indigo-500" />
+                        <span>Pusat Bantuan</span>
+                      </Link>
+                      <Link href="/help?tab=privacy" className="flex items-center gap-3 px-3 py-2 hover:bg-zinc-50 rounded-lg text-sm text-zinc-600 transition-colors">
+                        <Shield size={16} className="text-emerald-500" />
+                        <span>Privasi & Keamanan</span>
+                      </Link>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
               <Link 
                 href="/about"
                 className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-200 rounded-lg transition-colors text-sm text-zinc-600"
