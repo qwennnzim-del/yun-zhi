@@ -112,17 +112,21 @@ export default function ChatInterface() {
 
   // Handle responsive sidebar
   useEffect(() => {
+    let prevMobile = window.innerWidth < 1024;
+    setIsMobile(prevMobile);
+    setIsSidebarOpen(!prevMobile);
+
     const checkMobile = () => {
       const mobile = window.innerWidth < 1024;
       setIsMobile(mobile);
-      if (mobile) {
-        setIsSidebarOpen(false);
-      } else {
-        setIsSidebarOpen(true);
+      
+      // Only change sidebar state if crossing the breakpoint
+      if (mobile !== prevMobile) {
+        setIsSidebarOpen(!mobile);
+        prevMobile = mobile;
       }
     };
     
-    checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
@@ -345,7 +349,7 @@ export default function ChatInterface() {
                 onClick={startNewChat}
                 className="w-full flex items-center gap-3 px-4 py-3 bg-zinc-200/50 hover:bg-zinc-200 rounded-full transition-all hover:shadow-md text-zinc-700 font-medium group mb-4"
               >
-                <Plus size={20} className="text-zinc-500 group-hover:text-zinc-800 transition-colors" />
+                <Plus size={18} className="text-zinc-500 group-hover:text-zinc-800 transition-colors" />
                 <span className="group-hover:text-zinc-900">Chat Baru</span>
               </button>
 
@@ -636,18 +640,18 @@ export default function ChatInterface() {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="p-2 text-zinc-500 hover:bg-zinc-200 rounded-full transition-colors"
+                    className="p-2.5 text-zinc-500 hover:bg-zinc-200 rounded-full transition-colors"
                     title="Upload file"
                   >
-                    <Plus size={20} />
+                    <Plus size={18} />
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowTools(!showTools)}
-                    className="p-2 text-zinc-500 hover:bg-zinc-200 rounded-full transition-colors relative"
+                    className="p-2.5 text-zinc-500 hover:bg-zinc-200 rounded-full transition-colors relative"
                     title="Tools"
                   >
-                    <Wand2 size={20} />
+                    <Wand2 size={18} />
                     {showTools && (
                       <div className="absolute bottom-full left-0 mb-2 w-48 bg-white rounded-xl shadow-lg border border-zinc-100 p-2 flex flex-col gap-1 z-50">
                         <div className="text-xs font-semibold text-zinc-400 px-2 py-1">Fitur</div>
@@ -667,21 +671,21 @@ export default function ChatInterface() {
                 <div className="flex items-center gap-1">
                   <button
                     type="button"
-                    className="p-2 text-zinc-500 hover:bg-zinc-200 rounded-full transition-colors"
+                    className="p-2.5 text-zinc-500 hover:bg-zinc-200 rounded-full transition-colors"
                     title="Voice Note"
                   >
-                    <Mic size={20} />
+                    <Mic size={18} />
                   </button>
                   <button
                     type="submit"
                     disabled={(!input.trim() && !selectedFile) || isLoading}
-                    className={`p-2 rounded-full transition-all ${
+                    className={`p-2.5 rounded-full transition-all ${
                       (input.trim() || selectedFile) && !isLoading 
                         ? 'bg-zinc-900 text-white hover:bg-zinc-700 shadow-md' 
                         : 'bg-zinc-300 text-zinc-500 cursor-not-allowed'
                     }`}
                   >
-                    <Send size={20} />
+                    <Send size={18} />
                   </button>
                 </div>
               </div>
