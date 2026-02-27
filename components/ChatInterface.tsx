@@ -78,7 +78,7 @@ export default function ChatInterface() {
   const [showHelpPopup, setShowHelpPopup] = useState(false);
   
   // Model selection state
-  const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash-latest');
+  const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
   const [showModelSelector, setShowModelSelector] = useState(false);
 
   // File upload state
@@ -475,19 +475,19 @@ export default function ChatInterface() {
               <div className="space-y-3">
                 <button
                   onClick={() => {
-                    setSelectedModel('gemini-2.5-flash-latest');
+                    setSelectedModel('gemini-2.5-flash');
                     setShowModelSelector(false);
                   }}
                   className={`w-full flex items-start gap-4 p-4 rounded-2xl border transition-all ${
-                    selectedModel === 'gemini-2.5-flash-latest' 
+                    selectedModel === 'gemini-2.5-flash' 
                       ? 'border-indigo-500 bg-indigo-50/50' 
                       : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
                   }`}
                 >
                   <div className={`mt-1 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                    selectedModel === 'gemini-2.5-flash-latest' ? 'border-indigo-500' : 'border-zinc-300'
+                    selectedModel === 'gemini-2.5-flash' ? 'border-indigo-500' : 'border-zinc-300'
                   }`}>
-                    {selectedModel === 'gemini-2.5-flash-latest' && <div className="w-2.5 h-2.5 bg-indigo-500 rounded-full" />}
+                    {selectedModel === 'gemini-2.5-flash' && <div className="w-2.5 h-2.5 bg-indigo-500 rounded-full" />}
                   </div>
                   <div className="text-left">
                     <div className="font-semibold text-zinc-900 flex items-center gap-2">
