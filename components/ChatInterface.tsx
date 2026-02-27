@@ -152,7 +152,7 @@ export default function ChatInterface() {
 
     try {
       const chat = genAI.chats.create({
-        model: "gemini-3.1-flash-preview",
+        model: "gemini-3-flash-preview",
         config: {
           systemInstruction: "You are Yun-Zhi, an advanced AI assistant developed by M Fariz Alfauzi at Zent Technology Inc. You are helpful, creative, and friendly. Your responses should be clear, concise, and formatted nicely using Markdown where appropriate.",
         },
