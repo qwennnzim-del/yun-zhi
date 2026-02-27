@@ -97,6 +97,8 @@ export default function ChatInterface() {
   // Settings & Delete state
   const [showSettings, setShowSettings] = useState(false);
   const [chatToDelete, setChatToDelete] = useState<string | null>(null);
+  const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   // Fetch chat history from Firestore
   useEffect(() => {
@@ -199,6 +201,18 @@ export default function ChatInterface() {
     }
   };
 
+  const deleteAllChats = async () => {
+    try {
+      for (const chat of chatHistory) {
+        await deleteDoc(doc(db, 'chats', chat.id));
+      }
+      startNewChat();
+      setShowDeleteAllConfirm(false);
+    } catch (error) {
+      console.error("Error deleting all chats:", error);
+    }
+  };
+
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if ((!input.trim() && !selectedFile) || isLoading) return;
@@ -220,7 +234,7 @@ export default function ChatInterface() {
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: input,
+      content: input.trim() || (selectedFile ? (mimeType.startsWith('image/') ? "Tolong analisis gambar ini." : "Tolong analisis dokumen ini.") : ''),
       timestamp: new Date().toISOString(),
     };
 
@@ -246,7 +260,7 @@ export default function ChatInterface() {
         activeChatId = newChatRef.id;
         setCurrentChatId(activeChatId);
         await setDoc(newChatRef, {
-          title: input.trim().slice(0, 30) || 'Analisis Gambar',
+          title: userMessage.content.slice(0, 30) || 'Percakapan Baru',
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
           messages: newMessages
@@ -282,11 +296,7 @@ export default function ChatInterface() {
       if (base64Data) {
         messageParts.push({ inlineData: { mimeType, data: base64Data } });
       }
-      if (input.trim()) {
-        messageParts.push({ text: input });
-      } else if (base64Data) {
-        messageParts.push({ text: mimeType.startsWith('image/') ? "Tolong analisis gambar ini." : "Tolong analisis dokumen ini." });
-      }
+      messageParts.push({ text: userMessage.content });
 
       const result = await chat.sendMessageStream({ message: messageParts });
       
@@ -429,7 +439,7 @@ export default function ChatInterface() {
                           e.stopPropagation();
                           setChatToDelete(chat.id);
                         }}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-md opacity-0 group-hover:opacity-100 transition-all"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-md opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all"
                         title="Hapus percakapan"
                       >
                         <Trash2 size={14} />
@@ -917,30 +927,30 @@ export default function ChatInterface() {
                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        className="absolute bottom-full left-0 mb-3 bg-zinc-800 rounded-2xl shadow-xl border border-zinc-700 p-1.5 flex items-center gap-1 z-50"
+                        className="absolute bottom-full left-0 mb-3 bg-white rounded-2xl shadow-xl border border-zinc-200 p-1.5 flex items-center gap-1 z-50"
                       >
                         <button
                           type="button"
                           onClick={() => imageInputRef.current?.click()}
-                          className="flex flex-col items-center justify-center w-16 h-14 rounded-xl hover:bg-zinc-700 text-zinc-300 hover:text-white transition-colors gap-1"
+                          className="flex flex-col items-center justify-center w-16 h-14 rounded-xl hover:bg-zinc-100 text-zinc-600 hover:text-zinc-900 transition-colors gap-1"
                         >
                           <ImageIcon size={20} />
                           <span className="text-[10px] font-medium">Gambar</span>
                         </button>
-                        <div className="w-px h-8 bg-zinc-600/50 mx-0.5" />
+                        <div className="w-px h-8 bg-zinc-200 mx-0.5" />
                         <button
                           type="button"
                           onClick={() => fileInputRef.current?.click()}
-                          className="flex flex-col items-center justify-center w-16 h-14 rounded-xl hover:bg-zinc-700 text-zinc-300 hover:text-white transition-colors gap-1"
+                          className="flex flex-col items-center justify-center w-16 h-14 rounded-xl hover:bg-zinc-100 text-zinc-600 hover:text-zinc-900 transition-colors gap-1"
                         >
                           <FileIcon size={20} />
                           <span className="text-[10px] font-medium">File</span>
                         </button>
-                        <div className="w-px h-8 bg-zinc-600/50 mx-0.5" />
+                        <div className="w-px h-8 bg-zinc-200 mx-0.5" />
                         <button
                           type="button"
                           onClick={() => cameraInputRef.current?.click()}
-                          className="flex flex-col items-center justify-center w-16 h-14 rounded-xl hover:bg-zinc-700 text-zinc-300 hover:text-white transition-colors gap-1"
+                          className="flex flex-col items-center justify-center w-16 h-14 rounded-xl hover:bg-zinc-100 text-zinc-600 hover:text-zinc-900 transition-colors gap-1"
                         >
                           <Camera size={20} />
                           <span className="text-[10px] font-medium">Kamera</span>
@@ -1016,7 +1026,7 @@ export default function ChatInterface() {
               className="fixed z-[70] bg-white rounded-3xl shadow-2xl border border-zinc-200 p-6 w-[90%] max-w-md left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
             >
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold text-zinc-900">Setelan</h3>
+                <h3 className="text-xl font-semibold text-zinc-900">Pengaturan</h3>
                 <button 
                   onClick={() => setShowSettings(false)}
                   className="p-2 bg-zinc-100 hover:bg-zinc-200 rounded-full text-zinc-600 transition-colors"
@@ -1024,29 +1034,91 @@ export default function ChatInterface() {
                   <X size={20} />
                 </button>
               </div>
-              <div className="space-y-4">
-                <div className="p-4 rounded-2xl border border-zinc-200 bg-zinc-50">
-                  <h4 className="font-medium text-zinc-900 mb-1">Tema Aplikasi</h4>
-                  <p className="text-sm text-zinc-500 mb-3">Pilih tampilan yang Anda inginkan.</p>
-                  <div className="flex gap-2">
-                    <button className="flex-1 py-2 px-3 bg-white border border-indigo-500 text-indigo-700 rounded-xl text-sm font-medium shadow-sm">Terang</button>
-                    <button className="flex-1 py-2 px-3 bg-zinc-100 border border-zinc-200 text-zinc-500 rounded-xl text-sm font-medium hover:bg-zinc-200 transition-colors">Gelap</button>
+              <div className="space-y-3">
+                <div 
+                  onClick={() => setIsDarkMode(!isDarkMode)}
+                  className="flex items-center gap-4 p-4 rounded-2xl border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 transition-colors cursor-pointer"
+                >
+                  <div className={`w-12 h-7 rounded-full relative shrink-0 transition-colors ${isDarkMode ? 'bg-indigo-500' : 'bg-zinc-300'}`}>
+                    <div className={`w-5 h-5 bg-white rounded-full absolute top-1 shadow-sm transition-transform ${isDarkMode ? 'left-6' : 'left-1'}`}></div>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-zinc-900">Mode Gelap</h4>
+                    <p className="text-xs text-zinc-500">Ubah tampilan menjadi gelap (Segera)</p>
                   </div>
                 </div>
-                <div className="p-4 rounded-2xl border border-zinc-200 bg-zinc-50">
-                  <h4 className="font-medium text-zinc-900 mb-1">Hapus Semua Riwayat</h4>
-                  <p className="text-sm text-zinc-500 mb-3">Hapus semua percakapan dari perangkat dan server.</p>
-                  <button 
-                    onClick={() => {
-                      setShowSettings(false);
-                      // In a real app, you'd want to delete all docs in the collection
-                      alert('Fitur hapus semua riwayat akan segera hadir.');
-                    }}
-                    className="w-full py-2 px-3 bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 rounded-xl text-sm font-medium transition-colors"
-                  >
-                    Hapus Semua Percakapan
-                  </button>
+                
+                <button 
+                  onClick={() => {
+                    setShowSettings(false);
+                    setShowDeleteAllConfirm(true);
+                  }}
+                  className="w-full flex items-center gap-4 p-4 rounded-2xl border border-red-100 bg-red-50 hover:bg-red-100 transition-colors text-left"
+                >
+                  <div className="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center shrink-0">
+                    <Trash2 size={18} />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-red-600">Hapus Semua Riwayat</h4>
+                    <p className="text-xs text-red-500/80">Hapus permanen semua percakapan</p>
+                  </div>
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Delete All Confirmation Bottom Sheet */}
+      <AnimatePresence>
+        {showDeleteAllConfirm && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowDeleteAllConfirm(false)}
+              className="fixed inset-0 bg-black/20 z-[60] backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed bottom-0 left-0 right-0 z-[70] bg-white rounded-t-3xl shadow-2xl border-t border-zinc-200 p-6 md:max-w-md md:mx-auto md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:rounded-3xl"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center">
+                    <Trash2 size={20} />
+                  </div>
+                  <h3 className="text-lg font-semibold text-zinc-900">Hapus Semua Riwayat?</h3>
                 </div>
+                <button 
+                  onClick={() => setShowDeleteAllConfirm(false)}
+                  className="p-2 bg-zinc-100 hover:bg-zinc-200 rounded-full text-zinc-600 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              
+              <p className="text-sm text-zinc-500 mb-6">
+                Tindakan ini akan menghapus semua percakapan Anda secara permanen dari perangkat dan server. Anda yakin ingin melanjutkan?
+              </p>
+              
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setShowDeleteAllConfirm(false)}
+                  className="flex-1 py-3 px-4 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-xl font-medium transition-colors"
+                >
+                  Batal
+                </button>
+                <button 
+                  onClick={deleteAllChats}
+                  className="flex-1 py-3 px-4 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium shadow-sm transition-colors"
+                >
+                  Hapus Semua
+                </button>
               </div>
             </motion.div>
           </>
