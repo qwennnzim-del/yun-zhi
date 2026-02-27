@@ -174,9 +174,14 @@ export default function ChatInterface() {
       role: 'user',
       content: input,
       timestamp: new Date().toISOString(),
-      inlineData: base64Data ? { mimeType, data: base64Data } : undefined,
-      attachmentUrl
     };
+
+    if (base64Data) {
+      userMessage.inlineData = { mimeType, data: base64Data };
+    }
+    if (attachmentUrl) {
+      userMessage.attachmentUrl = attachmentUrl;
+    }
 
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
