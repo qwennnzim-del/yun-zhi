@@ -1,0 +1,8 @@
+node_modules
+.next
+out
+dist
+vite.config.ts
+vite.config.js
+vite-env.d.ts
+src/vite-env.d.ts
