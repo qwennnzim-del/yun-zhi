@@ -21,7 +21,8 @@ import {
   RotateCcw,
   Mic,
   Image as ImageIcon,
-  Code
+  Code,
+  Wand2
 } from 'lucide-react';
 
 // Initialize Gemini
@@ -32,7 +33,26 @@ interface Message {
   role: 'user' | 'model';
   content: string;
   timestamp: Date;
+  inlineData?: {
+    mimeType: string;
+    data: string;
+  };
+  attachmentUrl?: string;
 }
+
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        const base64Data = reader.result.split(',')[1];
+        resolve(base64Data);
+      }
+    };
+    reader.onerror = error => reject(error);
+  });
+};
 
 export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -44,6 +64,11 @@ export default function ChatInterface() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showTools, setShowTools] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  
+  // File upload state
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Handle responsive sidebar
   useEffect(() => {
@@ -76,34 +101,87 @@ export default function ChatInterface() {
     scrollToBottom();
   }, [messages]);
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      const url = URL.createObjectURL(file);
+      setFilePreview(url);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const removeFile = () => {
+    setSelectedFile(null);
+    if (filePreview) {
+      URL.revokeObjectURL(filePreview);
+      setFilePreview(null);
+    }
+  };
+
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!input.trim() || isLoading) return;
+    if ((!input.trim() && !selectedFile) || isLoading) return;
+
+    let base64Data = '';
+    let mimeType = '';
+    let attachmentUrl = '';
+
+    if (selectedFile) {
+      base64Data = await fileToBase64(selectedFile);
+      mimeType = selectedFile.type;
+      attachmentUrl = URL.createObjectURL(selectedFile);
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
       content: input,
       timestamp: new Date(),
+      inlineData: base64Data ? { mimeType, data: base64Data } : undefined,
+      attachmentUrl
     };
 
     setMessages(prev => [...prev, userMessage]);
     setInput('');
+    setSelectedFile(null);
+    setFilePreview(null);
     setIsLoading(true);
 
     try {
       const chat = genAI.chats.create({
-        model: "gemini-3-flash-preview",
+        model: "gemini-3.1-flash-preview",
         config: {
-          systemInstruction: "You are Yun-Zhi, a helpful, creative, and friendly AI assistant. Your responses should be clear, concise, and formatted nicely using Markdown where appropriate.",
+          systemInstruction: "You are Yun-Zhi, an advanced AI assistant developed by M Fariz Alfauzi at Zent Technology Inc. You are helpful, creative, and friendly. Your responses should be clear, concise, and formatted nicely using Markdown where appropriate.",
         },
-        history: messages.map(m => ({
-          role: m.role,
-          parts: [{ text: m.content }]
-        }))
+        history: messages.map(m => {
+          const parts: any[] = [];
+          if (m.inlineData) {
+            parts.push({ inlineData: m.inlineData });
+          }
+          if (m.content) {
+            parts.push({ text: m.content });
+          }
+          return {
+            role: m.role,
+            parts
+          };
+        })
       });
 
-      const result = await chat.sendMessageStream({ message: input });
+      const messageParts: any[] = [];
+      if (base64Data) {
+        messageParts.push({ inlineData: { mimeType, data: base64Data } });
+      }
+      if (input.trim()) {
+        messageParts.push({ text: input });
+      } else if (base64Data) {
+        messageParts.push({ text: "Tolong analisis gambar ini." });
+      }
+
+      const result = await chat.sendMessageStream({ message: messageParts });
       
       let assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -140,6 +218,7 @@ export default function ChatInterface() {
   const startNewChat = () => {
     setMessages([]);
     setInput('');
+    removeFile();
     if (isMobile) setIsSidebarOpen(false);
   };
 
@@ -246,7 +325,7 @@ export default function ChatInterface() {
             )}
             <div className="flex items-center gap-2 px-2">
               <span className="text-xl font-medium text-zinc-800 tracking-tight">Yun-Zhi</span>
-              <span className="text-xs bg-zinc-100 px-1.5 py-0.5 rounded text-zinc-500 font-medium">Flash</span>
+              <span className="text-xs bg-zinc-100 px-1.5 py-0.5 rounded text-zinc-500 font-medium">Zent AI</span>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -308,6 +387,12 @@ export default function ChatInterface() {
                       <div className={`prose max-w-none leading-relaxed ${
                         message.role === 'user' ? 'prose-zinc text-zinc-800 text-right' : 'prose-zinc text-zinc-800'
                       }`}>
+                        {message.attachmentUrl && (
+                          <div className={`mb-3 ${message.role === 'user' ? 'flex justify-end' : 'flex justify-start'}`}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={message.attachmentUrl} alt="Attachment" className="max-w-[200px] rounded-2xl border border-zinc-200 shadow-sm" />
+                          </div>
+                        )}
                         <ReactMarkdown>{message.content}</ReactMarkdown>
                       </div>
                     </div>
@@ -377,6 +462,22 @@ export default function ChatInterface() {
               onSubmit={handleSubmit}
               className="bg-zinc-100 rounded-[32px] p-3 shadow-sm focus-within:ring-1 focus-within:ring-zinc-200 transition-all"
             >
+              {filePreview && (
+                <div className="px-3 pt-2 pb-2">
+                  <div className="relative inline-block">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={filePreview} alt="Preview" className="h-16 w-16 object-cover rounded-xl border border-zinc-200 shadow-sm" />
+                    <button
+                      type="button"
+                      onClick={removeFile}
+                      className="absolute -top-2 -right-2 bg-zinc-800 text-white rounded-full p-1 hover:bg-zinc-700 shadow-sm"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -398,9 +499,17 @@ export default function ChatInterface() {
               />
               
               <div className="flex items-center justify-between pl-1">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden" 
+                    ref={fileInputRef} 
+                    onChange={handleFileChange} 
+                  />
                   <button
                     type="button"
+                    onClick={() => fileInputRef.current?.click()}
                     className="p-2 text-zinc-500 hover:bg-zinc-200 rounded-full transition-colors"
                     title="Upload file"
                   >
@@ -412,7 +521,7 @@ export default function ChatInterface() {
                     className="p-2 text-zinc-500 hover:bg-zinc-200 rounded-full transition-colors relative"
                     title="Tools"
                   >
-                    <Mic size={20} />
+                    <Wand2 size={20} />
                     {showTools && (
                       <div className="absolute bottom-full left-0 mb-2 w-48 bg-white rounded-xl shadow-lg border border-zinc-100 p-2 flex flex-col gap-1 z-50">
                         <div className="text-xs font-semibold text-zinc-400 px-2 py-1">Fitur</div>
@@ -429,17 +538,26 @@ export default function ChatInterface() {
                   </button>
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={!input.trim() || isLoading}
-                  className={`p-2 rounded-full transition-all ${
-                    input.trim() && !isLoading 
-                      ? 'bg-zinc-900 text-white hover:bg-zinc-700 shadow-md' 
-                      : 'bg-zinc-300 text-zinc-500 cursor-not-allowed'
-                  }`}
-                >
-                  <Send size={20} />
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    className="p-2 text-zinc-500 hover:bg-zinc-200 rounded-full transition-colors"
+                    title="Voice Note"
+                  >
+                    <Mic size={20} />
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={(!input.trim() && !selectedFile) || isLoading}
+                    className={`p-2 rounded-full transition-all ${
+                      (input.trim() || selectedFile) && !isLoading 
+                        ? 'bg-zinc-900 text-white hover:bg-zinc-700 shadow-md' 
+                        : 'bg-zinc-300 text-zinc-500 cursor-not-allowed'
+                    }`}
+                  >
+                    <Send size={20} />
+                  </button>
+                </div>
               </div>
             </form>
           </div>
