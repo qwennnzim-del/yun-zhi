@@ -8,8 +8,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Gemini Clone',
-  description: 'A minimal, white chatbot interface inspired by Google Gemini.',
+  title: 'Yun-Zhi AI',
+  description: 'Advanced AI assistant developed by Zent Technology Inc.',
 };
 
 export default function RootLayout({children}: {children: React.ReactNode}) {

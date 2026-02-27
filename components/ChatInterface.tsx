@@ -6,7 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
 import { db } from '@/lib/firebase';
-import { collection, doc, setDoc, updateDoc, onSnapshot, query, orderBy, serverTimestamp, getDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, updateDoc, onSnapshot, query, orderBy, serverTimestamp, getDoc, deleteDoc } from 'firebase/firestore';
 import { 
   Send, 
   Plus, 
@@ -28,7 +28,11 @@ import {
   Search,
   BookOpen,
   Shield,
-  ChevronUp
+  ChevronUp,
+  Trash2,
+  FileText,
+  Camera,
+  File as FileIcon
 } from 'lucide-react';
 
 // Initialize Gemini
@@ -84,7 +88,15 @@ export default function ChatInterface() {
   // File upload state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
+  
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  // Settings & Delete state
+  const [showSettings, setShowSettings] = useState(false);
+  const [chatToDelete, setChatToDelete] = useState<string | null>(null);
 
   // Fetch chat history from Firestore
   useEffect(() => {
@@ -153,19 +165,37 @@ export default function ChatInterface() {
     const file = e.target.files?.[0];
     if (file) {
       setSelectedFile(file);
-      const url = URL.createObjectURL(file);
-      setFilePreview(url);
+      if (file.type.startsWith('image/')) {
+        const url = URL.createObjectURL(file);
+        setFilePreview(url);
+      } else {
+        setFilePreview('file'); // Special string to denote non-image file
+      }
+      setShowAttachmentMenu(false);
     }
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    // Reset all inputs
+    if (imageInputRef.current) imageInputRef.current.value = '';
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (cameraInputRef.current) cameraInputRef.current.value = '';
   };
 
   const removeFile = () => {
     setSelectedFile(null);
-    if (filePreview) {
+    if (filePreview && filePreview !== 'file') {
       URL.revokeObjectURL(filePreview);
-      setFilePreview(null);
+    }
+    setFilePreview(null);
+  };
+
+  const deleteChat = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'chats', id));
+      if (currentChatId === id) {
+        startNewChat();
+      }
+      setChatToDelete(null);
+    } catch (error) {
+      console.error("Error deleting chat:", error);
     }
   };
 
@@ -179,8 +209,12 @@ export default function ChatInterface() {
 
     if (selectedFile) {
       base64Data = await fileToBase64(selectedFile);
-      mimeType = selectedFile.type;
-      attachmentUrl = URL.createObjectURL(selectedFile);
+      mimeType = selectedFile.type || 'text/plain';
+      if (mimeType.startsWith('image/')) {
+        attachmentUrl = URL.createObjectURL(selectedFile);
+      } else {
+        attachmentUrl = 'file'; // Special marker for non-image files
+      }
     }
 
     const userMessage: Message = {
@@ -251,7 +285,7 @@ export default function ChatInterface() {
       if (input.trim()) {
         messageParts.push({ text: input });
       } else if (base64Data) {
-        messageParts.push({ text: "Tolong analisis gambar ini." });
+        messageParts.push({ text: mimeType.startsWith('image/') ? "Tolong analisis gambar ini." : "Tolong analisis dokumen ini." });
       }
 
       const result = await chat.sendMessageStream({ message: messageParts });
@@ -380,16 +414,27 @@ export default function ChatInterface() {
                   <div className="px-4 py-2 text-sm text-zinc-400 italic">Tidak ditemukan</div>
                 ) : (
                   chatHistory.filter(chat => chat.title.toLowerCase().includes(searchQuery.toLowerCase())).map((chat) => (
-                    <button 
-                      key={chat.id}
-                      onClick={() => loadChat(chat.id)}
-                      className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm text-left truncate group ${
-                        currentChatId === chat.id ? 'bg-zinc-200 text-zinc-900 font-medium' : 'hover:bg-zinc-200 text-zinc-600'
-                      }`}
-                    >
-                      <MessageSquare size={16} className={`shrink-0 ${currentChatId === chat.id ? 'text-zinc-600' : 'text-zinc-400 group-hover:text-zinc-600'}`} />
-                      <span className="truncate">{chat.title}</span>
-                    </button>
+                    <div key={chat.id} className="relative group">
+                      <button 
+                        onClick={() => loadChat(chat.id)}
+                        className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm text-left truncate pr-10 ${
+                          currentChatId === chat.id ? 'bg-zinc-200 text-zinc-900 font-medium' : 'hover:bg-zinc-200 text-zinc-600'
+                        }`}
+                      >
+                        <MessageSquare size={16} className={`shrink-0 ${currentChatId === chat.id ? 'text-zinc-600' : 'text-zinc-400 group-hover:text-zinc-600'}`} />
+                        <span className="truncate">{chat.title}</span>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setChatToDelete(chat.id);
+                        }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-md opacity-0 group-hover:opacity-100 transition-all"
+                        title="Hapus percakapan"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   ))
                 )
               )}
@@ -435,7 +480,10 @@ export default function ChatInterface() {
                 <Info size={18} />
                 <span>Tentang</span>
               </Link>
-              <button className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-200 rounded-lg transition-colors text-sm text-zinc-600">
+              <button 
+                onClick={() => setShowSettings(true)}
+                className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-200 rounded-lg transition-colors text-sm text-zinc-600"
+              >
                 <Settings size={18} />
                 <span>Setelan</span>
               </button>
@@ -443,6 +491,93 @@ export default function ChatInterface() {
           </motion.aside>
         )}
       </AnimatePresence>
+
+      {/* Settings Modal */}
+      <AnimatePresence>
+        {showSettings && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowSettings(false)}
+              className="fixed inset-0 bg-black/20 z-[60] backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] bg-white rounded-2xl shadow-xl p-6 w-[90%] max-w-md"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-zinc-900">Setelan</h3>
+                <button 
+                  onClick={() => setShowSettings(false)}
+                  className="p-2 bg-zinc-100 hover:bg-zinc-200 rounded-full text-zinc-600 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div className="p-4 bg-zinc-50 rounded-xl border border-zinc-100">
+                  <h4 className="font-medium text-zinc-900 mb-1">Tema</h4>
+                  <p className="text-sm text-zinc-500 mb-3">Pilih tema tampilan aplikasi.</p>
+                  <div className="flex gap-2">
+                    <button className="px-4 py-2 bg-white border border-zinc-200 rounded-lg text-sm font-medium text-zinc-700 shadow-sm">Terang</button>
+                    <button className="px-4 py-2 bg-zinc-100 border border-transparent rounded-lg text-sm font-medium text-zinc-400 cursor-not-allowed">Gelap (Segera)</button>
+                  </div>
+                </div>
+                <div className="p-4 bg-zinc-50 rounded-xl border border-zinc-100">
+                  <h4 className="font-medium text-zinc-900 mb-1">Akun</h4>
+                  <p className="text-sm text-zinc-500">Masuk untuk menyimpan riwayat percakapan antar perangkat.</p>
+                  <button className="mt-3 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors">
+                    Masuk
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Chat Confirmation */}
+      <AnimatePresence>
+        {chatToDelete && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/20 z-[80] backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[90] bg-white rounded-2xl shadow-xl p-6 w-[90%] max-w-sm"
+            >
+              <h3 className="text-lg font-semibold text-zinc-900 mb-2">Hapus Percakapan?</h3>
+              <p className="text-sm text-zinc-500 mb-6">Percakapan ini akan dihapus secara permanen dan tidak dapat dikembalikan.</p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setChatToDelete(null)}
+                  className="px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={() => deleteChat(chatToDelete)}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors"
+                >
+                  Hapus
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+
 
       {/* Model Selector Bottom Sheet */}
       <AnimatePresence>
@@ -572,12 +707,20 @@ export default function ChatInterface() {
                 animate={{ opacity: 1, y: 0 }}
                 className="space-y-6"
               >
-                <h1 className="text-4xl md:text-5xl font-medium text-zinc-800 tracking-tight">
+                <div className="w-16 h-16 rounded-full border border-zinc-200 flex items-center justify-center text-indigo-600 shadow-sm bg-white mx-auto mb-6">
+                  <Sparkles size={32} />
+                </div>
+                <h1 className="text-3xl md:text-4xl font-medium text-zinc-800 tracking-tight">
                   Halo, <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600">User</span>
                 </h1>
-                <p className="text-xl md:text-2xl text-zinc-400 font-light max-w-xl">
-                  Saya Yun-Zhi, asisten AI Anda. Ada yang bisa saya bantu?
-                </p>
+                <div className="text-lg text-zinc-500 font-light max-w-xl mx-auto space-y-4">
+                  <p>
+                    Hello! I am <strong>Yun-Zhi</strong>, an advanced AI assistant developed by <strong>M Fariz Alfauzi</strong> at <strong>Zent Technology Inc.</strong>
+                  </p>
+                  <p>
+                    I'm here to help you with your questions, creative projects, or anything else you might need. How can I assist you today?
+                  </p>
+                </div>
               </motion.div>
             </div>
           ) : (
@@ -609,10 +752,21 @@ export default function ChatInterface() {
                       <div className={`prose max-w-none leading-relaxed ${
                         message.role === 'user' ? 'prose-zinc text-zinc-800 text-right' : 'prose-zinc text-zinc-800'
                       }`}>
-                        {message.attachmentUrl && (
+                        {message.attachmentUrl && message.attachmentUrl !== 'file' && (
                           <div className={`mb-3 ${message.role === 'user' ? 'flex justify-end' : 'flex justify-start'}`}>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={message.attachmentUrl} alt="Attachment" className="max-w-[200px] rounded-2xl border border-zinc-200 shadow-sm" />
+                          </div>
+                        )}
+                        {message.attachmentUrl === 'file' && (
+                          <div className={`mb-3 flex items-center gap-3 p-3 rounded-2xl border border-zinc-200 bg-zinc-50 shadow-sm max-w-[250px] ${message.role === 'user' ? 'ml-auto' : 'mr-auto'}`}>
+                            <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
+                              <FileIcon size={20} className="text-indigo-600" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-zinc-900 truncate">Dokumen Terlampir</p>
+                              <p className="text-xs text-zinc-500">File</p>
+                            </div>
                           </div>
                         )}
                         <ReactMarkdown>{message.content}</ReactMarkdown>
@@ -687,8 +841,14 @@ export default function ChatInterface() {
               {filePreview && (
                 <div className="px-3 pt-2 pb-2">
                   <div className="relative inline-block">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={filePreview} alt="Preview" className="h-16 w-16 object-cover rounded-xl border border-zinc-200 shadow-sm" />
+                    {filePreview === 'file' ? (
+                      <div className="h-16 w-16 rounded-xl border border-zinc-200 shadow-sm bg-indigo-50 flex items-center justify-center">
+                        <FileIcon size={24} className="text-indigo-500" />
+                      </div>
+                    ) : (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img src={filePreview} alt="Preview" className="h-16 w-16 object-cover rounded-xl border border-zinc-200 shadow-sm" />
+                    )}
                     <button
                       type="button"
                       onClick={removeFile}
@@ -721,22 +881,77 @@ export default function ChatInterface() {
               />
               
               <div className="flex items-center justify-between pl-1">
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 relative">
                   <input 
                     type="file" 
                     accept="image/*" 
                     className="hidden" 
+                    ref={imageInputRef} 
+                    onChange={handleFileChange} 
+                  />
+                  <input 
+                    type="file" 
+                    accept=".pdf,.doc,.docx,.txt,.csv" 
+                    className="hidden" 
                     ref={fileInputRef} 
                     onChange={handleFileChange} 
                   />
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    capture="environment"
+                    className="hidden" 
+                    ref={cameraInputRef} 
+                    onChange={handleFileChange} 
+                  />
+                  
                   <button
                     type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="p-2.5 text-zinc-500 hover:bg-zinc-200 rounded-full transition-colors"
-                    title="Upload file"
+                    onClick={() => setShowAttachmentMenu(!showAttachmentMenu)}
+                    className={`p-2.5 rounded-full transition-colors ${showAttachmentMenu ? 'bg-zinc-200 text-zinc-900' : 'text-zinc-500 hover:bg-zinc-200'}`}
+                    title="Lampirkan"
                   >
-                    <Plus size={18} />
+                    <Plus size={18} className={`transition-transform duration-200 ${showAttachmentMenu ? 'rotate-45' : ''}`} />
                   </button>
+
+                  <AnimatePresence>
+                    {showAttachmentMenu && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        className="absolute bottom-full left-0 mb-3 bg-zinc-800 rounded-2xl shadow-xl border border-zinc-700 p-1.5 flex items-center gap-1 z-50"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => imageInputRef.current?.click()}
+                          className="flex flex-col items-center justify-center w-16 h-14 rounded-xl hover:bg-zinc-700 text-zinc-300 hover:text-white transition-colors gap-1"
+                        >
+                          <ImageIcon size={20} />
+                          <span className="text-[10px] font-medium">Gambar</span>
+                        </button>
+                        <div className="w-px h-8 bg-zinc-600/50 mx-0.5" />
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="flex flex-col items-center justify-center w-16 h-14 rounded-xl hover:bg-zinc-700 text-zinc-300 hover:text-white transition-colors gap-1"
+                        >
+                          <FileIcon size={20} />
+                          <span className="text-[10px] font-medium">File</span>
+                        </button>
+                        <div className="w-px h-8 bg-zinc-600/50 mx-0.5" />
+                        <button
+                          type="button"
+                          onClick={() => cameraInputRef.current?.click()}
+                          className="flex flex-col items-center justify-center w-16 h-14 rounded-xl hover:bg-zinc-700 text-zinc-300 hover:text-white transition-colors gap-1"
+                        >
+                          <Camera size={20} />
+                          <span className="text-[10px] font-medium">Kamera</span>
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
                   <button
                     type="button"
                     onClick={() => setShowTools(!showTools)}
@@ -785,6 +1000,104 @@ export default function ChatInterface() {
           </div>
         </div>
       </main>
+
+      {/* Settings Modal */}
+      <AnimatePresence>
+        {showSettings && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowSettings(false)}
+              className="fixed inset-0 bg-black/20 z-[60] backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed z-[70] bg-white rounded-3xl shadow-2xl border border-zinc-200 p-6 w-[90%] max-w-md left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-semibold text-zinc-900">Setelan</h3>
+                <button 
+                  onClick={() => setShowSettings(false)}
+                  className="p-2 bg-zinc-100 hover:bg-zinc-200 rounded-full text-zinc-600 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div className="p-4 rounded-2xl border border-zinc-200 bg-zinc-50">
+                  <h4 className="font-medium text-zinc-900 mb-1">Tema Aplikasi</h4>
+                  <p className="text-sm text-zinc-500 mb-3">Pilih tampilan yang Anda inginkan.</p>
+                  <div className="flex gap-2">
+                    <button className="flex-1 py-2 px-3 bg-white border border-indigo-500 text-indigo-700 rounded-xl text-sm font-medium shadow-sm">Terang</button>
+                    <button className="flex-1 py-2 px-3 bg-zinc-100 border border-zinc-200 text-zinc-500 rounded-xl text-sm font-medium hover:bg-zinc-200 transition-colors">Gelap</button>
+                  </div>
+                </div>
+                <div className="p-4 rounded-2xl border border-zinc-200 bg-zinc-50">
+                  <h4 className="font-medium text-zinc-900 mb-1">Hapus Semua Riwayat</h4>
+                  <p className="text-sm text-zinc-500 mb-3">Hapus semua percakapan dari perangkat dan server.</p>
+                  <button 
+                    onClick={() => {
+                      setShowSettings(false);
+                      // In a real app, you'd want to delete all docs in the collection
+                      alert('Fitur hapus semua riwayat akan segera hadir.');
+                    }}
+                    className="w-full py-2 px-3 bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 rounded-xl text-sm font-medium transition-colors"
+                  >
+                    Hapus Semua Percakapan
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {chatToDelete && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setChatToDelete(null)}
+              className="fixed inset-0 bg-black/20 z-[60] backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed z-[70] bg-white rounded-3xl shadow-2xl border border-zinc-200 p-6 w-[90%] max-w-sm left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center"
+            >
+              <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trash2 size={32} />
+              </div>
+              <h3 className="text-xl font-semibold text-zinc-900 mb-2">Hapus Percakapan?</h3>
+              <p className="text-sm text-zinc-500 mb-6">
+                Percakapan ini akan dihapus secara permanen dari riwayat Anda. Tindakan ini tidak dapat dibatalkan.
+              </p>
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setChatToDelete(null)}
+                  className="flex-1 py-3 px-4 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-xl font-medium transition-colors"
+                >
+                  Batal
+                </button>
+                <button 
+                  onClick={() => deleteChat(chatToDelete)}
+                  className="flex-1 py-3 px-4 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium shadow-sm transition-colors"
+                >
+                  Hapus
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
