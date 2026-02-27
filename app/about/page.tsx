@@ -25,12 +25,12 @@ export default function AboutPage() {
             </div>
             <div>
               <h3 className="text-xl font-semibold text-zinc-900">M Fariz Alfauzi</h3>
-              <p className="text-zinc-500">CEO & Lead Developer</p>
+              <p className="text-zinc-500">CEO & Low Code Engineer</p>
             </div>
           </div>
 
           <p className="lead text-xl text-zinc-600">
-            Halo! Saya M Fariz Alfauzi, pemuda berusia 17 tahun kelahiran Cianjur, Jawa Barat. Saat ini saya sedang menempuh pendidikan di <strong>SMK NURUL ISLAM AFFANDIYAH</strong> mengambil jurusan Teknik Komputer.
+            M Fariz Alfauzi, pemuda berusia 17 tahun kelahiran Cianjur, Jawa Barat.sedang menempuh pendidikan di <strong>SMK NURUL ISLAM AFFANDIYAH</strong> mengambil jurusan Teknik Komputer.
           </p>
 
           <h2>Visi & Misi</h2>
