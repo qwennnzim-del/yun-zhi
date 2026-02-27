@@ -266,12 +266,12 @@ export default function ChatInterface() {
         });
       }
 
-    } catch (error) {
-      console.error("Error calling Gemini:", error);
+    } catch (error: any) {
+      console.error("Error calling Gemini or Firebase:", error);
       setMessages(prev => [...prev, {
         id: (Date.now() + 2).toString(),
         role: 'model',
-        content: "Maaf, terjadi kesalahan saat menghubungi AI. Silakan coba lagi.",
+        content: `Maaf, terjadi kesalahan: ${error?.message || 'Unknown error'}. Silakan coba lagi.`,
         timestamp: new Date().toISOString(),
       }]);
     } finally {
