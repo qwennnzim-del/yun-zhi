@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenAI } from "@google/genai";
 import ReactMarkdown from 'react-markdown';
 import { motion, AnimatePresence } from 'motion/react';
+import Link from 'next/link';
 import { 
   Send, 
   Plus, 
@@ -42,7 +43,6 @@ export default function ChatInterface() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showTools, setShowTools] = useState(false);
-  const [showAbout, setShowAbout] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   // Handle responsive sidebar
@@ -215,16 +215,13 @@ export default function ChatInterface() {
                 <HelpCircle size={18} />
                 <span>Bantuan</span>
               </button>
-              <button 
-                onClick={() => {
-                  setShowAbout(true);
-                  if (isMobile) setIsSidebarOpen(false);
-                }}
+              <Link 
+                href="/about"
                 className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-200 rounded-lg transition-colors text-sm text-zinc-600"
               >
                 <Info size={18} />
                 <span>Tentang</span>
-              </button>
+              </Link>
               <button className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-200 rounded-lg transition-colors text-sm text-zinc-600">
                 <Settings size={18} />
                 <span>Setelan</span>
@@ -236,73 +233,6 @@ export default function ChatInterface() {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col relative min-w-0 h-full">
-        {/* About Overlay */}
-        <AnimatePresence>
-          {showAbout && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className="absolute inset-0 z-40 bg-white overflow-y-auto"
-            >
-              <div className="max-w-3xl mx-auto py-12 px-6 md:px-8 pb-32">
-                <button 
-                  onClick={() => setShowAbout(false)}
-                  className="mb-8 flex items-center gap-2 text-zinc-500 hover:text-zinc-800 transition-colors"
-                >
-                  <X size={20} />
-                  <span>Tutup</span>
-                </button>
-                
-                <article className="prose prose-zinc prose-lg max-w-none">
-                  <h1 className="text-4xl md:text-5xl font-medium tracking-tight text-zinc-900 mb-8">
-                    Tentang Yun-Zhi
-                  </h1>
-                  
-                  <div className="flex items-center gap-4 mb-10 not-prose">
-                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xl font-bold shadow-md">
-                      FA
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-semibold text-zinc-900">M Fariz Alfauzi</h3>
-                      <p className="text-zinc-500">CEO & Lead Developer</p>
-                    </div>
-                  </div>
-
-                  <p className="lead text-xl text-zinc-600">
-                    Halo! Saya M Fariz Alfauzi, pemuda berusia 17 tahun kelahiran Cianjur, Jawa Barat. Saat ini saya sedang menempuh pendidikan di <strong>SMK NURUL ISLAM AFFANDIYAH</strong> mengambil jurusan Teknik Komputer.
-                  </p>
-
-                  <h2>Visi & Misi</h2>
-                  <p>
-                    <strong>Visi:</strong> Menghadirkan teknologi kecerdasan buatan yang mudah diakses, responsif, dan memiliki antarmuka yang ramah bagi semua kalangan di Indonesia dan dunia.
-                  </p>
-                  <p>
-                    <strong>Misi:</strong> Mengembangkan aplikasi dengan standar industri modern, mengutamakan kenyamanan pengguna (UX), dan terus berinovasi dalam dunia rekayasa perangkat lunak meskipun masih di usia muda.
-                  </p>
-
-                  <h2>Di Balik Layar (Teknologi)</h2>
-                  <p>
-                    Proyek Yun-Zhi ini dibangun dari nol dengan semangat untuk belajar dan menciptakan produk berkualitas tinggi. Berikut adalah teknologi utama yang menggerakkan aplikasi ini:
-                  </p>
-                  <ul>
-                    <li><strong>Next.js 15:</strong> Framework React modern untuk performa rendering yang sangat cepat.</li>
-                    <li><strong>Tailwind CSS 4:</strong> Digunakan untuk meracik desain antarmuka yang minimalis, bersih, dan responsif di berbagai ukuran layar.</li>
-                    <li><strong>Google Gemini API:</strong> Otak kecerdasan buatan di balik Yun-Zhi yang memberikan respon cerdas dan natural.</li>
-                    <li><strong>Framer Motion:</strong> Memberikan sentuhan animasi yang halus agar aplikasi terasa lebih hidup dan premium.</li>
-                  </ul>
-
-                  <hr className="my-10 border-zinc-200" />
-                  
-                  <p className="text-sm text-zinc-500 text-center">
-                    Dibuat dengan ❤️ oleh M Fariz Alfauzi © {new Date().getFullYear()}
-                  </p>
-                </article>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
         {/* Header */}
         <header className="h-16 flex items-center justify-between px-4 border-b border-transparent shrink-0">
           <div className="flex items-center gap-2">
