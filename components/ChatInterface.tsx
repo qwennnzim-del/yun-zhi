@@ -502,93 +502,6 @@ export default function ChatInterface() {
         )}
       </AnimatePresence>
 
-      {/* Settings Modal */}
-      <AnimatePresence>
-        {showSettings && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowSettings(false)}
-              className="fixed inset-0 bg-black/20 z-[60] backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] bg-white rounded-2xl shadow-xl p-6 w-[90%] max-w-md"
-            >
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-zinc-900">Setelan</h3>
-                <button 
-                  onClick={() => setShowSettings(false)}
-                  className="p-2 bg-zinc-100 hover:bg-zinc-200 rounded-full text-zinc-600 transition-colors"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-              <div className="space-y-4">
-                <div className="p-4 bg-zinc-50 rounded-xl border border-zinc-100">
-                  <h4 className="font-medium text-zinc-900 mb-1">Tema</h4>
-                  <p className="text-sm text-zinc-500 mb-3">Pilih tema tampilan aplikasi.</p>
-                  <div className="flex gap-2">
-                    <button className="px-4 py-2 bg-white border border-zinc-200 rounded-lg text-sm font-medium text-zinc-700 shadow-sm">Terang</button>
-                    <button className="px-4 py-2 bg-zinc-100 border border-transparent rounded-lg text-sm font-medium text-zinc-400 cursor-not-allowed">Gelap (Segera)</button>
-                  </div>
-                </div>
-                <div className="p-4 bg-zinc-50 rounded-xl border border-zinc-100">
-                  <h4 className="font-medium text-zinc-900 mb-1">Akun</h4>
-                  <p className="text-sm text-zinc-500">Masuk untuk menyimpan riwayat percakapan antar perangkat.</p>
-                  <button className="mt-3 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors">
-                    Masuk
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
-      {/* Delete Chat Confirmation */}
-      <AnimatePresence>
-        {chatToDelete && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/20 z-[80] backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[90] bg-white rounded-2xl shadow-xl p-6 w-[90%] max-w-sm"
-            >
-              <h3 className="text-lg font-semibold text-zinc-900 mb-2">Hapus Percakapan?</h3>
-              <p className="text-sm text-zinc-500 mb-6">Percakapan ini akan dihapus secara permanen dan tidak dapat dikembalikan.</p>
-              <div className="flex gap-3 justify-end">
-                <button
-                  onClick={() => setChatToDelete(null)}
-                  className="px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors"
-                >
-                  Batal
-                </button>
-                <button
-                  onClick={() => deleteChat(chatToDelete)}
-                  className="px-4 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors"
-                >
-                  Hapus
-                </button>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
-
-
       {/* Model Selector Bottom Sheet */}
       <AnimatePresence>
         {showModelSelector && (
@@ -687,7 +600,6 @@ export default function ChatInterface() {
               </button>
             )}
             <div className="flex items-center gap-2 px-2">
-              <span className="text-xl font-medium text-zinc-800 tracking-tight">Yun-Zhi</span>
               <button 
                 onClick={() => setShowModelSelector(true)}
                 className="flex items-center gap-1.5 text-xs bg-zinc-100 hover:bg-zinc-200 px-2.5 py-1.5 rounded-lg text-zinc-600 font-medium transition-colors"
