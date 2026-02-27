@@ -5,6 +5,8 @@ import { GoogleGenAI } from "@google/genai";
 import ReactMarkdown from 'react-markdown';
 import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
+import { db } from '@/lib/firebase';
+import { collection, doc, setDoc, updateDoc, onSnapshot, query, orderBy, serverTimestamp, getDoc } from 'firebase/firestore';
 import { 
   Send, 
   Plus, 
@@ -32,7 +34,7 @@ interface Message {
   id: string;
   role: 'user' | 'model';
   content: string;
-  timestamp: Date;
+  timestamp: string;
   inlineData?: {
     mimeType: string;
     data: string;
@@ -65,10 +67,42 @@ export default function ChatInterface() {
   const [showTools, setShowTools] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   
+  // Firebase state
+  const [chatHistory, setChatHistory] = useState<{id: string, title: string}[]>([]);
+  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
+
   // File upload state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch chat history from Firestore
+  useEffect(() => {
+    const q = query(collection(db, 'chats'), orderBy('updatedAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const chats = snapshot.docs.map(doc => ({
+        id: doc.id,
+        title: doc.data().title || 'Chat Baru',
+      }));
+      setChatHistory(chats);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const loadChat = async (id: string) => {
+    try {
+      const docRef = doc(db, 'chats', id);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setMessages(data.messages || []);
+        setCurrentChatId(id);
+        if (isMobile) setIsSidebarOpen(false);
+      }
+    } catch (error) {
+      console.error("Error loading chat:", error);
+    }
+  };
 
   // Handle responsive sidebar
   useEffect(() => {
@@ -139,18 +173,38 @@ export default function ChatInterface() {
       id: Date.now().toString(),
       role: 'user',
       content: input,
-      timestamp: new Date(),
+      timestamp: new Date().toISOString(),
       inlineData: base64Data ? { mimeType, data: base64Data } : undefined,
       attachmentUrl
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
     setInput('');
     setSelectedFile(null);
     setFilePreview(null);
     setIsLoading(true);
 
+    let activeChatId = currentChatId;
+
     try {
+      if (!activeChatId) {
+        const newChatRef = doc(collection(db, 'chats'));
+        activeChatId = newChatRef.id;
+        setCurrentChatId(activeChatId);
+        await setDoc(newChatRef, {
+          title: input.trim().slice(0, 30) || 'Analisis Gambar',
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          messages: newMessages
+        });
+      } else {
+        await updateDoc(doc(db, 'chats', activeChatId), {
+          messages: newMessages,
+          updatedAt: serverTimestamp()
+        });
+      }
+
       const chat = genAI.chats.create({
         model: "gemini-3-flash-preview",
         config: {
@@ -187,7 +241,7 @@ export default function ChatInterface() {
         id: (Date.now() + 1).toString(),
         role: 'model',
         content: '',
-        timestamp: new Date(),
+        timestamp: new Date().toISOString(),
       };
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -202,13 +256,23 @@ export default function ChatInterface() {
             : msg
         ));
       }
+
+      // Save final AI message to Firestore
+      if (activeChatId) {
+        const finalMessages = [...newMessages, { ...assistantMessage, content: fullText }];
+        await updateDoc(doc(db, 'chats', activeChatId), {
+          messages: finalMessages,
+          updatedAt: serverTimestamp()
+        });
+      }
+
     } catch (error) {
       console.error("Error calling Gemini:", error);
       setMessages(prev => [...prev, {
         id: (Date.now() + 2).toString(),
         role: 'model',
         content: "Maaf, terjadi kesalahan saat menghubungi AI. Silakan coba lagi.",
-        timestamp: new Date(),
+        timestamp: new Date().toISOString(),
       }]);
     } finally {
       setIsLoading(false);
@@ -219,6 +283,7 @@ export default function ChatInterface() {
     setMessages([]);
     setInput('');
     removeFile();
+    setCurrentChatId(null);
     if (isMobile) setIsSidebarOpen(false);
   };
 
@@ -278,15 +343,22 @@ export default function ChatInterface() {
               <div className="text-xs font-semibold text-zinc-500 px-4 py-2 uppercase tracking-wider">
                 Terbaru
               </div>
-              {/* Mock history for UI demo */}
-              <button className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-200 rounded-lg transition-colors text-sm text-zinc-600 text-left truncate group">
-                <MessageSquare size={16} className="shrink-0 text-zinc-400 group-hover:text-zinc-600" />
-                <span className="truncate">Apa itu Next.js?</span>
-              </button>
-              <button className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-200 rounded-lg transition-colors text-sm text-zinc-600 text-left truncate group">
-                <MessageSquare size={16} className="shrink-0 text-zinc-400 group-hover:text-zinc-600" />
-                <span className="truncate">Resep Nasi Goreng</span>
-              </button>
+              {chatHistory.length === 0 ? (
+                <div className="px-4 py-2 text-sm text-zinc-400 italic">Belum ada percakapan</div>
+              ) : (
+                chatHistory.map((chat) => (
+                  <button 
+                    key={chat.id}
+                    onClick={() => loadChat(chat.id)}
+                    className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm text-left truncate group ${
+                      currentChatId === chat.id ? 'bg-zinc-200 text-zinc-900 font-medium' : 'hover:bg-zinc-200 text-zinc-600'
+                    }`}
+                  >
+                    <MessageSquare size={16} className={`shrink-0 ${currentChatId === chat.id ? 'text-zinc-600' : 'text-zinc-400 group-hover:text-zinc-600'}`} />
+                    <span className="truncate">{chat.title}</span>
+                  </button>
+                ))
+              )}
             </div>
 
             <div className="p-3 border-t border-zinc-200 space-y-1">
