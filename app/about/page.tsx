@@ -4,7 +4,7 @@ import { ArrowLeft } from 'lucide-react';
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="h-full overflow-y-auto bg-white font-sans">
       <div className="max-w-3xl mx-auto py-12 px-6 md:px-8 pb-32">
         <Link 
           href="/"
@@ -54,8 +54,8 @@ export default function AboutPage() {
 
           <hr className="my-10 border-zinc-200" />
           
-          <p className="text-sm text-zinc-500 text-center">
-            Dibuat dengan ❤️ oleh M Fariz Alfauzi © {new Date().getFullYear()}
+          <p className="text-sm text-zinc-500 text-center font-medium">
+            ©2026 Zent Technology Inc.
           </p>
         </article>
       </div>
