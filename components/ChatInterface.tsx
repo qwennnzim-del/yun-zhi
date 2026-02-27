@@ -715,10 +715,7 @@ export default function ChatInterface() {
                 </h1>
                 <div className="text-lg text-zinc-500 font-light max-w-xl mx-auto space-y-4">
                   <p>
-                    Hello! I am <strong>Yun-Zhi</strong>, an advanced AI assistant developed by <strong>M Fariz Alfauzi</strong> at <strong>Zent Technology Inc.</strong>
-                  </p>
-                  <p>
-                    I'm here to help you with your questions, creative projects, or anything else you might need. How can I assist you today?
+                    I'm <strong>Yun-Zhi</strong>. How can I help you today?
                   </p>
                 </div>
               </motion.div>
