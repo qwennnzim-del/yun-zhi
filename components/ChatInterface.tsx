@@ -32,7 +32,14 @@ import {
   Trash2,
   FileText,
   Camera,
-  File as FileIcon
+  File as FileIcon,
+  ArrowUp,
+  ArrowLeft,
+  Link2,
+  Volume2,
+  Globe,
+  MessageCircle,
+  Smartphone
 } from 'lucide-react';
 
 // Initialize Gemini
@@ -896,13 +903,6 @@ export default function ChatInterface() {
 
                 <div className="flex items-center gap-1">
                   <button
-                    type="button"
-                    className="p-2.5 text-zinc-500 hover:bg-zinc-200 rounded-full transition-colors"
-                    title="Voice Note"
-                  >
-                    <Mic size={18} />
-                  </button>
-                  <button
                     type="submit"
                     disabled={(!input.trim() && !selectedFile) || isLoading}
                     className={`p-2.5 rounded-full transition-all ${
@@ -911,7 +911,7 @@ export default function ChatInterface() {
                         : 'bg-zinc-300 text-zinc-500 cursor-not-allowed'
                     }`}
                   >
-                    <Send size={18} />
+                    <ArrowUp size={18} strokeWidth={2.5} />
                   </button>
                 </div>
               </div>
@@ -920,64 +920,130 @@ export default function ChatInterface() {
         </div>
       </main>
 
-      {/* Settings Modal */}
+      {/* Settings Full Screen */}
       <AnimatePresence>
         {showSettings && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowSettings(false)}
-              className="fixed inset-0 bg-black/20 z-[60] backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="fixed z-[70] bg-white rounded-3xl shadow-2xl border border-zinc-200 p-6 w-[90%] max-w-md left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-            >
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold text-zinc-900">Pengaturan</h3>
-                <button 
-                  onClick={() => setShowSettings(false)}
-                  className="p-2 bg-zinc-100 hover:bg-zinc-200 rounded-full text-zinc-600 transition-colors"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-              <div className="space-y-3">
-                <div 
-                  onClick={() => setIsDarkMode(!isDarkMode)}
-                  className="flex items-center gap-4 p-4 rounded-2xl border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 transition-colors cursor-pointer"
-                >
-                  <div className={`w-12 h-7 rounded-full relative shrink-0 transition-colors ${isDarkMode ? 'bg-indigo-500' : 'bg-zinc-300'}`}>
-                    <div className={`w-5 h-5 bg-white rounded-full absolute top-1 shadow-sm transition-transform ${isDarkMode ? 'left-6' : 'left-1'}`}></div>
+          <motion.div
+            initial={{ opacity: 0, x: '100%' }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed inset-0 z-[100] bg-white overflow-y-auto flex flex-col"
+          >
+            <div className="sticky top-0 bg-white/80 backdrop-blur-md z-10 flex items-center px-4 h-16 border-b border-zinc-100">
+              <button 
+                onClick={() => setShowSettings(false)}
+                className="p-2 -ml-2 hover:bg-zinc-100 rounded-full text-zinc-600 transition-colors"
+              >
+                <ArrowLeft size={24} />
+              </button>
+              <h2 className="text-2xl font-normal text-zinc-800 ml-4">Pengaturan Yun-Zhi</h2>
+            </div>
+            
+            <div className="flex-1 max-w-3xl mx-auto w-full py-4 px-4 sm:px-6">
+              <div className="space-y-1">
+                {/* Link publik Anda */}
+                <div className="flex items-start gap-4 p-4 hover:bg-zinc-50 rounded-2xl transition-colors cursor-pointer">
+                  <div className="mt-1 text-zinc-500 shrink-0">
+                    <Link2 size={24} strokeWidth={1.5} />
                   </div>
                   <div>
-                    <h4 className="font-medium text-zinc-900">Mode Gelap</h4>
-                    <p className="text-xs text-zinc-500">Ubah tampilan menjadi gelap (Segera)</p>
+                    <h4 className="text-base font-medium text-zinc-900">Link publik Anda</h4>
+                    <p className="text-sm text-zinc-500 mt-0.5">Kontrol cara Anda membagikan percakapan dan respons</p>
                   </div>
                 </div>
-                
-                <button 
+
+                {/* Suara Yun-Zhi */}
+                <div className="flex items-start gap-4 p-4 hover:bg-zinc-50 rounded-2xl transition-colors cursor-pointer">
+                  <div className="mt-1 text-zinc-500 shrink-0">
+                    <Volume2 size={24} strokeWidth={1.5} />
+                  </div>
+                  <div>
+                    <h4 className="text-base font-medium text-zinc-900">Suara Yun-Zhi</h4>
+                    <p className="text-sm text-zinc-500 mt-0.5">Pilih suara Yun-Zhi</p>
+                  </div>
+                </div>
+
+                {/* Mode Gelap (Toggle) */}
+                <div 
+                  onClick={() => setIsDarkMode(!isDarkMode)}
+                  className="flex items-start gap-4 p-4 hover:bg-zinc-50 rounded-2xl transition-colors cursor-pointer"
+                >
+                  <div className="mt-1 text-zinc-500 shrink-0">
+                    <Settings size={24} strokeWidth={1.5} />
+                  </div>
+                  <div className="flex-1 pr-4">
+                    <h4 className="text-base font-medium text-zinc-900">Mode Gelap</h4>
+                    <p className="text-sm text-zinc-500 mt-0.5">Ubah tampilan menjadi gelap (Segera)</p>
+                  </div>
+                  <div className={`w-12 h-7 rounded-full relative shrink-0 transition-colors mt-1 ${isDarkMode ? 'bg-indigo-600' : 'bg-zinc-300'}`}>
+                    <div className={`w-5 h-5 bg-white rounded-full absolute top-1 shadow-sm transition-transform ${isDarkMode ? 'left-6' : 'left-1'}`}></div>
+                  </div>
+                </div>
+
+                {/* Preferensi teks */}
+                <div className="flex items-start gap-4 p-4 hover:bg-zinc-50 rounded-2xl transition-colors cursor-pointer">
+                  <div className="mt-1 text-zinc-500 shrink-0">
+                    <FileText size={24} strokeWidth={1.5} />
+                  </div>
+                  <div>
+                    <h4 className="text-base font-medium text-zinc-900">Preferensi teks</h4>
+                    <p className="text-sm text-zinc-500 mt-0.5">Kelola teks perangkat untuk melihat teks dari respons Yun-Zhi Live</p>
+                  </div>
+                </div>
+
+                {/* Bahasa */}
+                <div className="flex items-start gap-4 p-4 hover:bg-zinc-50 rounded-2xl transition-colors cursor-pointer">
+                  <div className="mt-1 text-zinc-500 shrink-0">
+                    <Globe size={24} strokeWidth={1.5} />
+                  </div>
+                  <div>
+                    <h4 className="text-base font-medium text-zinc-900">Bahasa</h4>
+                    <p className="text-sm text-zinc-500 mt-0.5">Untuk bicara dengan Yun-Zhi</p>
+                  </div>
+                </div>
+
+                {/* Bicara dengan Yun-Zhi secara handsfree */}
+                <div className="flex items-start gap-4 p-4 hover:bg-zinc-50 rounded-2xl transition-colors cursor-pointer">
+                  <div className="mt-1 text-zinc-500 shrink-0">
+                    <MessageCircle size={24} strokeWidth={1.5} />
+                  </div>
+                  <div>
+                    <h4 className="text-base font-medium text-zinc-900">Bicara dengan Yun-Zhi secara handsfree</h4>
+                    <p className="text-sm text-zinc-500 mt-0.5">Ucapkan "Ok Google" untuk mendapatkan bantuan dari Yun-Zhi</p>
+                  </div>
+                </div>
+
+                {/* Konteks layar */}
+                <div className="flex items-start gap-4 p-4 hover:bg-zinc-50 rounded-2xl transition-colors cursor-pointer">
+                  <div className="mt-1 text-zinc-500 shrink-0">
+                    <Smartphone size={24} strokeWidth={1.5} />
+                  </div>
+                  <div>
+                    <h4 className="text-base font-medium text-zinc-900">Konteks layar</h4>
+                    <p className="text-sm text-zinc-500 mt-0.5">Izinkan Yun-Zhi mengambil informasi di layar Anda</p>
+                  </div>
+                </div>
+
+                {/* Hapus Semua Riwayat */}
+                <div 
                   onClick={() => {
                     setShowSettings(false);
                     setShowDeleteAllConfirm(true);
                   }}
-                  className="w-full flex items-center gap-4 p-4 rounded-2xl border border-red-100 bg-red-50 hover:bg-red-100 transition-colors text-left"
+                  className="flex items-start gap-4 p-4 hover:bg-red-50 rounded-2xl transition-colors cursor-pointer group"
                 >
-                  <div className="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center shrink-0">
-                    <Trash2 size={18} />
+                  <div className="mt-1 text-red-500 shrink-0">
+                    <Trash2 size={24} strokeWidth={1.5} />
                   </div>
                   <div>
-                    <h4 className="font-medium text-red-600">Hapus Semua Riwayat</h4>
-                    <p className="text-xs text-red-500/80">Hapus permanen semua percakapan</p>
+                    <h4 className="text-base font-medium text-red-600">Hapus Semua Riwayat</h4>
+                    <p className="text-sm text-red-500/80 mt-0.5">Hapus permanen semua percakapan dari perangkat dan server</p>
                   </div>
-                </button>
+                </div>
               </div>
-            </motion.div>
-          </>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
 
