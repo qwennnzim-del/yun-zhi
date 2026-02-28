@@ -39,7 +39,8 @@ import {
   Volume2,
   Globe,
   MessageCircle,
-  Smartphone
+  Smartphone,
+  Share2
 } from 'lucide-react';
 
 // Initialize Gemini
@@ -83,10 +84,11 @@ export default function ChatInterface() {
   const chatContainerRef = useRef<HTMLDivElement>(null);
   
   // Firebase state
-  const [chatHistory, setChatHistory] = useState<{id: string, title: string}[]>([]);
+  const [chatHistory, setChatHistory] = useState<{id: string, title: string, isPublic?: boolean, updatedAt?: any}[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showHelpPopup, setShowHelpPopup] = useState(false);
+  const [showPublicLinks, setShowPublicLinks] = useState(false);
   
   // Model selection state
   const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
@@ -114,6 +116,8 @@ export default function ChatInterface() {
       const chats = snapshot.docs.map(doc => ({
         id: doc.id,
         title: doc.data().title || 'Chat Baru',
+        isPublic: doc.data().isPublic || false,
+        updatedAt: doc.data().updatedAt
       }));
       setChatHistory(chats);
     });
@@ -217,6 +221,30 @@ export default function ChatInterface() {
       setShowDeleteAllConfirm(false);
     } catch (error) {
       console.error("Error deleting all chats:", error);
+    }
+  };
+
+  const handleShareChat = async () => {
+    if (!currentChatId) return;
+    try {
+      await updateDoc(doc(db, 'chats', currentChatId), {
+        isPublic: true
+      });
+      const shareUrl = `${window.location.origin}/share/${currentChatId}`;
+      await navigator.clipboard.writeText(shareUrl);
+      alert('Link publik berhasil disalin ke clipboard!');
+    } catch (error) {
+      console.error("Error sharing chat:", error);
+    }
+  };
+
+  const handleRemovePublicLink = async (chatId: string) => {
+    try {
+      await updateDoc(doc(db, 'chats', chatId), {
+        isPublic: false
+      });
+    } catch (error) {
+      console.error("Error removing public link:", error);
     }
   };
 
@@ -618,6 +646,15 @@ export default function ChatInterface() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {currentChatId && (
+              <button 
+                onClick={handleShareChat}
+                className="p-2 hover:bg-zinc-100 rounded-full transition-colors text-zinc-600"
+                title="Bagikan percakapan"
+              >
+                <Share2 size={20} />
+              </button>
+            )}
             <button className="btn-login">
               Login
             </button>
@@ -943,7 +980,13 @@ export default function ChatInterface() {
             <div className="flex-1 max-w-3xl mx-auto w-full py-4 px-4 sm:px-6">
               <div className="space-y-1">
                 {/* Link publik Anda */}
-                <div className="flex items-start gap-4 p-4 hover:bg-zinc-50 rounded-2xl transition-colors cursor-pointer">
+                <div 
+                  onClick={() => {
+                    setShowSettings(false);
+                    setShowPublicLinks(true);
+                  }}
+                  className="flex items-start gap-4 p-4 hover:bg-zinc-50 rounded-2xl transition-colors cursor-pointer"
+                >
                   <div className="mt-1 text-zinc-500 shrink-0">
                     <Link2 size={24} strokeWidth={1.5} />
                   </div>
@@ -1042,6 +1085,76 @@ export default function ChatInterface() {
                   </div>
                 </div>
               </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Public Links Full Screen */}
+      <AnimatePresence>
+        {showPublicLinks && (
+          <motion.div
+            initial={{ opacity: 0, x: '100%' }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed inset-0 z-[110] bg-white overflow-y-auto flex flex-col"
+          >
+            <div className="sticky top-0 bg-white/80 backdrop-blur-md z-10 flex items-center px-4 h-16 border-b border-zinc-100">
+              <button 
+                onClick={() => {
+                  setShowPublicLinks(false);
+                  setShowSettings(true);
+                }}
+                className="p-2 -ml-2 hover:bg-zinc-100 rounded-full text-zinc-600 transition-colors"
+              >
+                <ArrowLeft size={24} />
+              </button>
+              <h2 className="text-2xl font-normal text-zinc-800 ml-4">Link publik Anda</h2>
+            </div>
+            
+            <div className="flex-1 max-w-3xl mx-auto w-full py-6 px-4 sm:px-6">
+              {chatHistory.filter(c => c.isPublic).length === 0 ? (
+                <div className="text-center mt-20">
+                  <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mx-auto mb-4 text-zinc-400">
+                    <Link2 size={32} />
+                  </div>
+                  <h3 className="text-lg font-medium text-zinc-900 mb-2">Belum ada link publik</h3>
+                  <p className="text-zinc-500 text-sm max-w-sm mx-auto">
+                    Anda belum membagikan percakapan apa pun. Bagikan percakapan untuk membuat link publik.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {chatHistory.filter(c => c.isPublic).map(chat => (
+                    <div key={chat.id} className="p-4 border border-zinc-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <h4 className="font-medium text-zinc-900">{chat.title}</h4>
+                        <p className="text-sm text-zinc-500 mt-1">
+                          {chat.updatedAt?.toDate ? new Date(chat.updatedAt.toDate()).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Baru saja'}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={() => {
+                            navigator.clipboard.writeText(`${window.location.origin}/share/${chat.id}`);
+                            alert('Link disalin!');
+                          }}
+                          className="px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                        >
+                          <Copy size={14} /> Salin
+                        </button>
+                        <button 
+                          onClick={() => handleRemovePublicLink(chat.id)}
+                          className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                        >
+                          <Trash2 size={14} /> Hapus link
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </motion.div>
         )}
