@@ -108,6 +108,10 @@ export default function ChatInterface() {
   const [chatToDelete, setChatToDelete] = useState<string | null>(null);
   const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [showVoiceSettings, setShowVoiceSettings] = useState(false);
+  const [selectedVoice, setSelectedVoice] = useState('Kore');
+  const [isPlayingAudio, setIsPlayingAudio] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Fetch chat history from Firestore
   useEffect(() => {
@@ -245,6 +249,51 @@ export default function ChatInterface() {
       });
     } catch (error) {
       console.error("Error removing public link:", error);
+    }
+  };
+
+  const handlePlayAudio = async (text: string, messageId: string) => {
+    if (isPlayingAudio === messageId) {
+      // Stop playing
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      setIsPlayingAudio(null);
+      return;
+    }
+
+    try {
+      setIsPlayingAudio(messageId);
+      const response = await genAI.models.generateContent({
+        model: "gemini-2.5-flash-preview-tts",
+        contents: [{ parts: [{ text }] }],
+        config: {
+          responseModalities: ["AUDIO"],
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: { voiceName: selectedVoice },
+            },
+          },
+        },
+      });
+
+      const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+      if (base64Audio) {
+        const audioUrl = `data:audio/mp3;base64,${base64Audio}`;
+        if (audioRef.current) {
+          audioRef.current.pause();
+        }
+        const audio = new Audio(audioUrl);
+        audioRef.current = audio;
+        audio.onended = () => setIsPlayingAudio(null);
+        audio.play();
+      } else {
+        setIsPlayingAudio(null);
+      }
+    } catch (error) {
+      console.error("Error generating audio:", error);
+      setIsPlayingAudio(null);
     }
   };
 
@@ -745,10 +794,11 @@ export default function ChatInterface() {
                           {copiedId === message.id ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
                         </button>
                         <button 
-                          className="p-1.5 hover:bg-zinc-100 rounded-md text-zinc-400 hover:text-zinc-600 transition-colors"
-                          title="Putar ulang"
+                          onClick={() => handlePlayAudio(message.content, message.id)}
+                          className={`p-1.5 hover:bg-zinc-100 rounded-md transition-colors ${isPlayingAudio === messageId ? 'text-indigo-600 bg-indigo-50' : 'text-zinc-400 hover:text-zinc-600'}`}
+                          title={isPlayingAudio === message.id ? "Berhenti" : "Dengarkan"}
                         >
-                          <RotateCcw size={14} />
+                          <Volume2 size={14} />
                         </button>
                         <button 
                           className="p-1.5 hover:bg-zinc-100 rounded-md text-zinc-400 hover:text-zinc-600 transition-colors"
@@ -997,13 +1047,19 @@ export default function ChatInterface() {
                 </div>
 
                 {/* Suara Yun-Zhi */}
-                <div className="flex items-start gap-4 p-4 hover:bg-zinc-50 rounded-2xl transition-colors cursor-pointer">
+                <div 
+                  onClick={() => {
+                    setShowSettings(false);
+                    setShowVoiceSettings(true);
+                  }}
+                  className="flex items-start gap-4 p-4 hover:bg-zinc-50 rounded-2xl transition-colors cursor-pointer"
+                >
                   <div className="mt-1 text-zinc-500 shrink-0">
                     <Volume2 size={24} strokeWidth={1.5} />
                   </div>
                   <div>
                     <h4 className="text-base font-medium text-zinc-900">Suara Yun-Zhi</h4>
-                    <p className="text-sm text-zinc-500 mt-0.5">Pilih suara Yun-Zhi</p>
+                    <p className="text-sm text-zinc-500 mt-0.5">Pilih suara Yun-Zhi ({selectedVoice})</p>
                   </div>
                 </div>
 
@@ -1155,6 +1211,68 @@ export default function ChatInterface() {
                   ))}
                 </div>
               )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Voice Settings Full Screen */}
+      <AnimatePresence>
+        {showVoiceSettings && (
+          <motion.div
+            initial={{ opacity: 0, x: '100%' }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed inset-0 z-[110] bg-white overflow-y-auto flex flex-col"
+          >
+            <div className="sticky top-0 bg-white/80 backdrop-blur-md z-10 flex items-center px-4 h-16 border-b border-zinc-100">
+              <button 
+                onClick={() => {
+                  setShowVoiceSettings(false);
+                  setShowSettings(true);
+                }}
+                className="p-2 -ml-2 hover:bg-zinc-100 rounded-full text-zinc-600 transition-colors"
+              >
+                <ArrowLeft size={24} />
+              </button>
+              <h2 className="text-2xl font-normal text-zinc-800 ml-4">Suara Yun-Zhi</h2>
+            </div>
+            
+            <div className="flex-1 max-w-3xl mx-auto w-full py-6 px-4 sm:px-6">
+              <p className="text-zinc-600 mb-6">Pilih suara yang akan digunakan Yun-Zhi saat membacakan respons untuk Anda.</p>
+              
+              <div className="space-y-3">
+                {['Puck', 'Charon', 'Kore', 'Fenrir', 'Zephyr'].map((voice) => (
+                  <div 
+                    key={voice}
+                    onClick={() => setSelectedVoice(voice)}
+                    className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-colors cursor-pointer ${
+                      selectedVoice === voice 
+                        ? 'border-indigo-500 bg-indigo-50/50' 
+                        : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        selectedVoice === voice ? 'bg-indigo-100 text-indigo-600' : 'bg-zinc-100 text-zinc-500'
+                      }`}>
+                        <Volume2 size={20} />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-zinc-900">{voice}</h4>
+                        <p className="text-sm text-zinc-500">Suara {voice === 'Kore' || voice === 'Puck' ? 'Wanita' : 'Pria'}</p>
+                      </div>
+                    </div>
+                    
+                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                      selectedVoice === voice ? 'border-indigo-500' : 'border-zinc-300'
+                    }`}>
+                      {selectedVoice === voice && <div className="w-3 h-3 bg-indigo-500 rounded-full" />}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </motion.div>
         )}
