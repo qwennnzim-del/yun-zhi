@@ -2,6 +2,24 @@
 @plugin "@tailwindcss/typography";
 
 @layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    overscroll-behavior-y: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  button, a, [role="button"] {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
   .prose {
     --tw-prose-body: #3f3f46;
     --tw-prose-headings: #18181b;
