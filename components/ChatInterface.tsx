@@ -40,7 +40,9 @@ import {
   Globe,
   MessageCircle,
   Smartphone,
-  Share2
+  Share2,
+  ThumbsUp,
+  Loader2
 } from 'lucide-react';
 
 // Initialize Gemini
@@ -111,7 +113,18 @@ export default function ChatInterface() {
   const [showVoiceSettings, setShowVoiceSettings] = useState(false);
   const [selectedVoice, setSelectedVoice] = useState('Kore');
   const [isPlayingAudio, setIsPlayingAudio] = useState<string | null>(null);
+  const [loadingAudioId, setLoadingAudioId] = useState<string | null>(null);
+  const [likedMessages, setLikedMessages] = useState<Set<string>>(new Set());
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const toggleLike = (id: string) => {
+    setLikedMessages(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) newSet.delete(id);
+      else newSet.add(id);
+      return newSet;
+    });
+  };
 
   // Fetch chat history from Firestore
   useEffect(() => {
@@ -264,7 +277,7 @@ export default function ChatInterface() {
     }
 
     try {
-      setIsPlayingAudio(messageId);
+      setLoadingAudioId(messageId);
       const response = await genAI.models.generateContent({
         model: "gemini-2.5-flash-preview-tts",
         contents: [{ parts: [{ text }] }],
@@ -287,13 +300,16 @@ export default function ChatInterface() {
         const audio = new Audio(audioUrl);
         audioRef.current = audio;
         audio.onended = () => setIsPlayingAudio(null);
+        
+        setLoadingAudioId(null);
+        setIsPlayingAudio(messageId);
         audio.play();
       } else {
-        setIsPlayingAudio(null);
+        setLoadingAudioId(null);
       }
     } catch (error) {
       console.error("Error generating audio:", error);
-      setIsPlayingAudio(null);
+      setLoadingAudioId(null);
     }
   };
 
@@ -787,6 +803,13 @@ export default function ChatInterface() {
                     {message.role === 'model' && message.content && (
                       <div className="flex items-center gap-2 pt-2 pl-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button 
+                          onClick={() => toggleLike(message.id)}
+                          className={`p-1.5 rounded-md transition-colors ${likedMessages.has(message.id) ? 'text-indigo-600 bg-indigo-50' : 'text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100'}`}
+                          title={likedMessages.has(message.id) ? "Batal Suka" : "Suka"}
+                        >
+                          <ThumbsUp size={14} className={likedMessages.has(message.id) ? "fill-indigo-600" : ""} />
+                        </button>
+                        <button 
                           onClick={() => copyToClipboard(message.content, message.id)}
                           className="p-1.5 hover:bg-zinc-100 rounded-md text-zinc-400 hover:text-zinc-600 transition-colors"
                           title="Salin"
@@ -795,10 +818,21 @@ export default function ChatInterface() {
                         </button>
                         <button 
                           onClick={() => handlePlayAudio(message.content, message.id)}
-                          className={`p-1.5 hover:bg-zinc-100 rounded-md transition-colors ${isPlayingAudio === message.id ? 'text-indigo-600 bg-indigo-50' : 'text-zinc-400 hover:text-zinc-600'}`}
+                          disabled={loadingAudioId === message.id}
+                          className={`p-1.5 rounded-md transition-colors ${isPlayingAudio === message.id || loadingAudioId === message.id ? 'text-indigo-600 bg-indigo-50' : 'text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100'}`}
                           title={isPlayingAudio === message.id ? "Berhenti" : "Dengarkan"}
                         >
-                          <Volume2 size={14} />
+                          {loadingAudioId === message.id ? (
+                            <Loader2 size={14} className="animate-spin" />
+                          ) : isPlayingAudio === message.id ? (
+                            <div className="flex items-center justify-center gap-[2px] h-[14px] w-[14px]">
+                              <motion.div animate={{ height: ["4px", "12px", "4px"] }} transition={{ repeat: Infinity, duration: 0.8, ease: "easeInOut", delay: 0 }} className="w-[3px] bg-indigo-600 rounded-full" />
+                              <motion.div animate={{ height: ["4px", "14px", "4px"] }} transition={{ repeat: Infinity, duration: 0.8, ease: "easeInOut", delay: 0.2 }} className="w-[3px] bg-indigo-600 rounded-full" />
+                              <motion.div animate={{ height: ["4px", "10px", "4px"] }} transition={{ repeat: Infinity, duration: 0.8, ease: "easeInOut", delay: 0.4 }} className="w-[3px] bg-indigo-600 rounded-full" />
+                            </div>
+                          ) : (
+                            <Volume2 size={14} />
+                          )}
                         </button>
                         <button 
                           className="p-1.5 hover:bg-zinc-100 rounded-md text-zinc-400 hover:text-zinc-600 transition-colors"
