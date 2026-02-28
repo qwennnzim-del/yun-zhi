@@ -801,7 +801,7 @@ export default function ChatInterface() {
                       </div>
                     </div>
                     {message.role === 'model' && message.content && (
-                      <div className="flex items-center gap-2 pt-2 pl-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-2 pt-2 pl-2 transition-opacity">
                         <button 
                           onClick={() => toggleLike(message.id)}
                           className={`p-1.5 rounded-md transition-colors ${likedMessages.has(message.id) ? 'text-indigo-600 bg-indigo-50' : 'text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100'}`}
