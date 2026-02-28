@@ -277,12 +277,12 @@ export default function ChatInterface() {
         config: {
           systemInstruction: "You are Yun-Zhi, an advanced AI assistant developed by M Fariz Alfauzi at Zent Technology Inc. You are helpful, creative, and friendly. Your responses should be clear, concise, and formatted nicely using Markdown where appropriate.",
         },
-        history: messages.map(m => {
+        history: messages.filter(m => m.content.trim() || m.inlineData).map(m => {
           const parts: any[] = [];
           if (m.inlineData) {
             parts.push({ inlineData: m.inlineData });
           }
-          if (m.content) {
+          if (m.content.trim()) {
             parts.push({ text: m.content });
           }
           return {
@@ -611,9 +611,9 @@ export default function ChatInterface() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-sm ring-2 ring-indigo-100">
-              U
-            </div>
+            <button className="btn-login">
+              Login
+            </button>
           </div>
         </header>
 
