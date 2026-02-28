@@ -795,7 +795,7 @@ export default function ChatInterface() {
                         </button>
                         <button 
                           onClick={() => handlePlayAudio(message.content, message.id)}
-                          className={`p-1.5 hover:bg-zinc-100 rounded-md transition-colors ${isPlayingAudio === messageId ? 'text-indigo-600 bg-indigo-50' : 'text-zinc-400 hover:text-zinc-600'}`}
+                          className={`p-1.5 hover:bg-zinc-100 rounded-md transition-colors ${isPlayingAudio === message.id ? 'text-indigo-600 bg-indigo-50' : 'text-zinc-400 hover:text-zinc-600'}`}
                           title={isPlayingAudio === message.id ? "Berhenti" : "Dengarkan"}
                         >
                           <Volume2 size={14} />
