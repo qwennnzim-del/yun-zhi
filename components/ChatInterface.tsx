@@ -115,7 +115,7 @@ export default function ChatInterface() {
   const [isPlayingAudio, setIsPlayingAudio] = useState<string | null>(null);
   const [loadingAudioId, setLoadingAudioId] = useState<string | null>(null);
   const [likedMessages, setLikedMessages] = useState<Set<string>>(new Set());
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioRef = useRef<{ pause: () => void } | null>(null);
 
   const toggleLike = (id: string) => {
     setLikedMessages(prev => {
@@ -292,18 +292,62 @@ export default function ChatInterface() {
       });
 
       const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+      const mimeType = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.mimeType || 'audio/pcm;rate=24000';
+      
       if (base64Audio) {
-        const audioUrl = `data:audio/mp3;base64,${base64Audio}`;
         if (audioRef.current) {
           audioRef.current.pause();
         }
-        const audio = new Audio(audioUrl);
-        audioRef.current = audio;
-        audio.onended = () => setIsPlayingAudio(null);
-        
-        setLoadingAudioId(null);
-        setIsPlayingAudio(messageId);
-        audio.play();
+
+        if (mimeType.includes('audio/pcm')) {
+          const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+          const binaryString = window.atob(base64Audio);
+          const len = binaryString.length;
+          const bytes = new Uint8Array(len);
+          for (let i = 0; i < len; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          
+          const floatArray = new Float32Array(len / 2);
+          const dataView = new DataView(bytes.buffer);
+          for (let i = 0; i < len / 2; i++) {
+            floatArray[i] = dataView.getInt16(i * 2, true) / 32768.0;
+          }
+          
+          const audioBuffer = audioCtx.createBuffer(1, floatArray.length, 24000);
+          audioBuffer.getChannelData(0).set(floatArray);
+          
+          const source = audioCtx.createBufferSource();
+          source.buffer = audioBuffer;
+          source.connect(audioCtx.destination);
+          
+          source.onended = () => {
+            setIsPlayingAudio(null);
+            audioCtx.close();
+          };
+          
+          audioRef.current = {
+            pause: () => {
+              source.stop();
+              audioCtx.close();
+            }
+          };
+          
+          setLoadingAudioId(null);
+          setIsPlayingAudio(messageId);
+          source.start();
+        } else {
+          const audioUrl = `data:${mimeType};base64,${base64Audio}`;
+          const audio = new Audio(audioUrl);
+          audioRef.current = {
+            pause: () => audio.pause()
+          };
+          audio.onended = () => setIsPlayingAudio(null);
+          
+          setLoadingAudioId(null);
+          setIsPlayingAudio(messageId);
+          audio.play();
+        }
       } else {
         setLoadingAudioId(null);
       }
