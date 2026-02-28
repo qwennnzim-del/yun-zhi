@@ -300,42 +300,67 @@ export default function ChatInterface() {
         }
 
         if (mimeType.includes('audio/pcm')) {
-          const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+          // Convert raw PCM to WAV format
           const binaryString = window.atob(base64Audio);
           const len = binaryString.length;
           const bytes = new Uint8Array(len);
           for (let i = 0; i < len; i++) {
             bytes[i] = binaryString.charCodeAt(i);
           }
-          
-          const floatArray = new Float32Array(len / 2);
-          const dataView = new DataView(bytes.buffer);
-          for (let i = 0; i < len / 2; i++) {
-            floatArray[i] = dataView.getInt16(i * 2, true) / 32768.0;
-          }
-          
-          const audioBuffer = audioCtx.createBuffer(1, floatArray.length, 24000);
-          audioBuffer.getChannelData(0).set(floatArray);
-          
-          const source = audioCtx.createBufferSource();
-          source.buffer = audioBuffer;
-          source.connect(audioCtx.destination);
-          
-          source.onended = () => {
-            setIsPlayingAudio(null);
-            audioCtx.close();
+
+          const sampleRate = 24000;
+          const numChannels = 1;
+          const bitsPerSample = 16;
+          const byteRate = (sampleRate * numChannels * bitsPerSample) / 8;
+          const blockAlign = (numChannels * bitsPerSample) / 8;
+          const dataSize = bytes.length;
+          const buffer = new ArrayBuffer(44 + dataSize);
+          const view = new DataView(buffer);
+
+          const writeString = (view: DataView, offset: number, string: string) => {
+            for (let i = 0; i < string.length; i++) {
+              view.setUint8(offset + i, string.charCodeAt(i));
+            }
           };
+
+          writeString(view, 0, 'RIFF');
+          view.setUint32(4, 36 + dataSize, true);
+          writeString(view, 8, 'WAVE');
+          writeString(view, 12, 'fmt ');
+          view.setUint32(16, 16, true);
+          view.setUint16(20, 1, true);
+          view.setUint16(22, numChannels, true);
+          view.setUint32(24, sampleRate, true);
+          view.setUint32(28, byteRate, true);
+          view.setUint16(32, blockAlign, true);
+          view.setUint16(34, bitsPerSample, true);
+          writeString(view, 36, 'data');
+          view.setUint32(40, dataSize, true);
+
+          const pcmBytes = new Uint8Array(buffer, 44);
+          pcmBytes.set(bytes);
+
+          const blob = new Blob([buffer], { type: 'audio/wav' });
+          const audioUrl = URL.createObjectURL(blob);
           
+          const audio = new Audio(audioUrl);
           audioRef.current = {
             pause: () => {
-              source.stop();
-              audioCtx.close();
+              audio.pause();
+              URL.revokeObjectURL(audioUrl);
             }
+          };
+          audio.onended = () => {
+            setIsPlayingAudio(null);
+            URL.revokeObjectURL(audioUrl);
           };
           
           setLoadingAudioId(null);
           setIsPlayingAudio(messageId);
-          source.start();
+          audio.play().catch(e => {
+            console.error("Error playing audio:", e);
+            setIsPlayingAudio(null);
+          });
         } else {
           const audioUrl = `data:${mimeType};base64,${base64Audio}`;
           const audio = new Audio(audioUrl);
