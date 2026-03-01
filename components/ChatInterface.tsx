@@ -110,12 +110,7 @@ export default function ChatInterface() {
   const [chatToDelete, setChatToDelete] = useState<string | null>(null);
   const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [showVoiceSettings, setShowVoiceSettings] = useState(false);
-  const [selectedVoice, setSelectedVoice] = useState('Kore');
-  const [isPlayingAudio, setIsPlayingAudio] = useState<string | null>(null);
-  const [loadingAudioId, setLoadingAudioId] = useState<string | null>(null);
   const [likedMessages, setLikedMessages] = useState<Set<string>>(new Set());
-  const audioRef = useRef<{ pause: () => void } | null>(null);
 
   const toggleLike = (id: string) => {
     setLikedMessages(prev => {
@@ -262,123 +257,6 @@ export default function ChatInterface() {
       });
     } catch (error) {
       console.error("Error removing public link:", error);
-    }
-  };
-
-  const handlePlayAudio = async (text: string, messageId: string) => {
-    if (isPlayingAudio === messageId) {
-      // Stop playing
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-      setIsPlayingAudio(null);
-      return;
-    }
-
-    try {
-      setLoadingAudioId(messageId);
-      const response = await genAI.models.generateContent({
-        model: "gemini-2.5-flash-preview-tts",
-        contents: [{ parts: [{ text }] }],
-        config: {
-          responseModalities: ["AUDIO"],
-          speechConfig: {
-            voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: selectedVoice },
-            },
-          },
-        },
-      });
-
-      const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-      const mimeType = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.mimeType || 'audio/pcm;rate=24000';
-      
-      if (base64Audio) {
-        if (audioRef.current) {
-          audioRef.current.pause();
-        }
-
-        if (mimeType.includes('audio/pcm')) {
-          // Convert raw PCM to WAV format
-          const binaryString = window.atob(base64Audio);
-          const len = binaryString.length;
-          const bytes = new Uint8Array(len);
-          for (let i = 0; i < len; i++) {
-            bytes[i] = binaryString.charCodeAt(i);
-          }
-
-          const sampleRate = 24000;
-          const numChannels = 1;
-          const bitsPerSample = 16;
-          const byteRate = (sampleRate * numChannels * bitsPerSample) / 8;
-          const blockAlign = (numChannels * bitsPerSample) / 8;
-          const dataSize = bytes.length;
-          const buffer = new ArrayBuffer(44 + dataSize);
-          const view = new DataView(buffer);
-
-          const writeString = (view: DataView, offset: number, string: string) => {
-            for (let i = 0; i < string.length; i++) {
-              view.setUint8(offset + i, string.charCodeAt(i));
-            }
-          };
-
-          writeString(view, 0, 'RIFF');
-          view.setUint32(4, 36 + dataSize, true);
-          writeString(view, 8, 'WAVE');
-          writeString(view, 12, 'fmt ');
-          view.setUint32(16, 16, true);
-          view.setUint16(20, 1, true);
-          view.setUint16(22, numChannels, true);
-          view.setUint32(24, sampleRate, true);
-          view.setUint32(28, byteRate, true);
-          view.setUint16(32, blockAlign, true);
-          view.setUint16(34, bitsPerSample, true);
-          writeString(view, 36, 'data');
-          view.setUint32(40, dataSize, true);
-
-          const pcmBytes = new Uint8Array(buffer, 44);
-          pcmBytes.set(bytes);
-
-          const blob = new Blob([buffer], { type: 'audio/wav' });
-          const audioUrl = URL.createObjectURL(blob);
-          
-          const audio = new Audio(audioUrl);
-          audioRef.current = {
-            pause: () => {
-              audio.pause();
-              URL.revokeObjectURL(audioUrl);
-            }
-          };
-          audio.onended = () => {
-            setIsPlayingAudio(null);
-            URL.revokeObjectURL(audioUrl);
-          };
-          
-          setLoadingAudioId(null);
-          setIsPlayingAudio(messageId);
-          audio.play().catch(e => {
-            console.error("Error playing audio:", e);
-            setIsPlayingAudio(null);
-          });
-        } else {
-          const audioUrl = `data:${mimeType};base64,${base64Audio}`;
-          const audio = new Audio(audioUrl);
-          audioRef.current = {
-            pause: () => audio.pause()
-          };
-          audio.onended = () => setIsPlayingAudio(null);
-          
-          setLoadingAudioId(null);
-          setIsPlayingAudio(messageId);
-          audio.play();
-        }
-      } else {
-        setLoadingAudioId(null);
-      }
-    } catch (error) {
-      console.error("Error generating audio:", error);
-      setLoadingAudioId(null);
     }
   };
 
@@ -773,7 +651,7 @@ export default function ChatInterface() {
                 onClick={() => setShowModelSelector(true)}
                 className="flex items-center gap-1.5 text-xs bg-zinc-100 hover:bg-zinc-200 px-2.5 py-1.5 rounded-lg text-zinc-600 font-medium transition-colors"
               >
-                <Sparkles size={14} className="text-indigo-500" />
+                <img src="/logo-app.png" alt="Yun-Zhi Logo" className="w-3.5 h-3.5 object-contain" />
                 {selectedModel === 'gemini-3-flash-preview' ? 'Yun-Zhi 3' : 'Yun-Zhi 2.5'}
                 <ChevronUp size={14} className="rotate-180 text-zinc-400" />
               </button>
@@ -807,8 +685,8 @@ export default function ChatInterface() {
                 animate={{ opacity: 1, y: 0 }}
                 className="space-y-6"
               >
-                <div className="w-16 h-16 rounded-full border border-zinc-200 flex items-center justify-center text-indigo-600 shadow-sm bg-white mx-auto mb-6">
-                  <Sparkles size={32} />
+                <div className="w-16 h-16 rounded-full border border-zinc-200 flex items-center justify-center shadow-sm bg-white mx-auto mb-6">
+                  <img src="/logo-app.png" alt="Yun-Zhi Logo" className="w-8 h-8 object-contain" />
                 </div>
                 <h1 className="text-3xl md:text-4xl font-medium text-zinc-800 tracking-tight">
                   Halo, <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600">User</span>
@@ -835,8 +713,8 @@ export default function ChatInterface() {
                         U
                       </div>
                     ) : (
-                      <div className="w-8 h-8 rounded-full border border-zinc-200 flex items-center justify-center text-indigo-600 shadow-sm bg-white">
-                        <Sparkles size={16} />
+                      <div className="w-8 h-8 rounded-full border border-zinc-200 flex items-center justify-center shadow-sm bg-white">
+                        <img src="/logo-app.png" alt="Yun-Zhi Logo" className="w-5 h-5 object-contain" />
                       </div>
                     )}
                   </div>
@@ -886,24 +764,6 @@ export default function ChatInterface() {
                           {copiedId === message.id ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
                         </button>
                         <button 
-                          onClick={() => handlePlayAudio(message.content, message.id)}
-                          disabled={loadingAudioId === message.id}
-                          className={`p-1.5 rounded-md transition-colors ${isPlayingAudio === message.id || loadingAudioId === message.id ? 'text-indigo-600 bg-indigo-50' : 'text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100'}`}
-                          title={isPlayingAudio === message.id ? "Berhenti" : "Dengarkan"}
-                        >
-                          {loadingAudioId === message.id ? (
-                            <Loader2 size={14} className="animate-spin" />
-                          ) : isPlayingAudio === message.id ? (
-                            <div className="flex items-center justify-center gap-[2px] h-[14px] w-[14px]">
-                              <motion.div animate={{ height: ["4px", "12px", "4px"] }} transition={{ repeat: Infinity, duration: 0.8, ease: "easeInOut", delay: 0 }} className="w-[3px] bg-indigo-600 rounded-full" />
-                              <motion.div animate={{ height: ["4px", "14px", "4px"] }} transition={{ repeat: Infinity, duration: 0.8, ease: "easeInOut", delay: 0.2 }} className="w-[3px] bg-indigo-600 rounded-full" />
-                              <motion.div animate={{ height: ["4px", "10px", "4px"] }} transition={{ repeat: Infinity, duration: 0.8, ease: "easeInOut", delay: 0.4 }} className="w-[3px] bg-indigo-600 rounded-full" />
-                            </div>
-                          ) : (
-                            <Volume2 size={14} />
-                          )}
-                        </button>
-                        <button 
                           className="p-1.5 hover:bg-zinc-100 rounded-md text-zinc-400 hover:text-zinc-600 transition-colors"
                           title="Lainnya"
                         >
@@ -917,8 +777,8 @@ export default function ChatInterface() {
               {isLoading && messages[messages.length - 1]?.role === 'user' && (
                 <div className="flex gap-4 md:gap-6">
                   <div className="shrink-0 mt-1">
-                     <div className="w-8 h-8 rounded-full border border-zinc-200 flex items-center justify-center text-indigo-600 shadow-sm bg-white">
-                        <Sparkles size={16} />
+                     <div className="w-8 h-8 rounded-full border border-zinc-200 flex items-center justify-center shadow-sm bg-white">
+                        <img src="/logo-app.png" alt="Yun-Zhi Logo" className="w-5 h-5 object-contain" />
                       </div>
                   </div>
                   <div className="px-2 py-2">
@@ -1149,23 +1009,6 @@ export default function ChatInterface() {
                   </div>
                 </div>
 
-                {/* Suara Yun-Zhi */}
-                <div 
-                  onClick={() => {
-                    setShowSettings(false);
-                    setShowVoiceSettings(true);
-                  }}
-                  className="flex items-start gap-4 p-4 hover:bg-zinc-50 rounded-2xl transition-colors cursor-pointer"
-                >
-                  <div className="mt-1 text-zinc-500 shrink-0">
-                    <Volume2 size={24} strokeWidth={1.5} />
-                  </div>
-                  <div>
-                    <h4 className="text-base font-medium text-zinc-900">Suara Yun-Zhi</h4>
-                    <p className="text-sm text-zinc-500 mt-0.5">Pilih suara Yun-Zhi ({selectedVoice})</p>
-                  </div>
-                </div>
-
                 {/* Mode Gelap (Toggle) */}
                 <div 
                   onClick={() => setIsDarkMode(!isDarkMode)}
@@ -1314,68 +1157,6 @@ export default function ChatInterface() {
                   ))}
                 </div>
               )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Voice Settings Full Screen */}
-      <AnimatePresence>
-        {showVoiceSettings && (
-          <motion.div
-            initial={{ opacity: 0, x: '100%' }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-0 z-[110] bg-white overflow-y-auto flex flex-col"
-          >
-            <div className="sticky top-0 bg-white/80 backdrop-blur-md z-10 flex items-center px-4 h-16 border-b border-zinc-100">
-              <button 
-                onClick={() => {
-                  setShowVoiceSettings(false);
-                  setShowSettings(true);
-                }}
-                className="p-2 -ml-2 hover:bg-zinc-100 rounded-full text-zinc-600 transition-colors"
-              >
-                <ArrowLeft size={24} />
-              </button>
-              <h2 className="text-2xl font-normal text-zinc-800 ml-4">Suara Yun-Zhi</h2>
-            </div>
-            
-            <div className="flex-1 max-w-3xl mx-auto w-full py-6 px-4 sm:px-6">
-              <p className="text-zinc-600 mb-6">Pilih suara yang akan digunakan Yun-Zhi saat membacakan respons untuk Anda.</p>
-              
-              <div className="space-y-3">
-                {['Puck', 'Charon', 'Kore', 'Fenrir', 'Zephyr'].map((voice) => (
-                  <div 
-                    key={voice}
-                    onClick={() => setSelectedVoice(voice)}
-                    className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-colors cursor-pointer ${
-                      selectedVoice === voice 
-                        ? 'border-indigo-500 bg-indigo-50/50' 
-                        : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        selectedVoice === voice ? 'bg-indigo-100 text-indigo-600' : 'bg-zinc-100 text-zinc-500'
-                      }`}>
-                        <Volume2 size={20} />
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-zinc-900">{voice}</h4>
-                        <p className="text-sm text-zinc-500">Suara {voice === 'Kore' || voice === 'Puck' ? 'Wanita' : 'Pria'}</p>
-                      </div>
-                    </div>
-                    
-                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                      selectedVoice === voice ? 'border-indigo-500' : 'border-zinc-300'
-                    }`}>
-                      {selectedVoice === voice && <div className="w-3 h-3 bg-indigo-500 rounded-full" />}
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
           </motion.div>
         )}
