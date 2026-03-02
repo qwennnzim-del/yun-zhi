@@ -685,8 +685,8 @@ export default function ChatInterface() {
                 animate={{ opacity: 1, y: 0 }}
                 className="space-y-6"
               >
-                <div className="w-20 h-20 rounded-full border border-zinc-200 flex items-center justify-center shadow-sm bg-white mx-auto mb-6">
-                  <img src="/logo-app.png" alt="Yun-Zhi Logo" className="w-12 h-12 object-contain" />
+                <div className="flex items-center justify-center mx-auto mb-6">
+                  <img src="/logo-app.png" alt="Yun-Zhi Logo" className="w-20 h-20 object-contain" />
                 </div>
                 <h1 className="text-3xl md:text-4xl font-medium text-zinc-800 tracking-tight">
                   Halo, <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600">User</span>
@@ -713,8 +713,8 @@ export default function ChatInterface() {
                         U
                       </div>
                     ) : (
-                      <div className="w-10 h-10 rounded-full border border-zinc-200 flex items-center justify-center shadow-sm bg-white">
-                        <img src="/logo-app.png" alt="Yun-Zhi Logo" className="w-6 h-6 object-contain" />
+                      <div className="w-10 h-10 flex items-center justify-center">
+                        <img src="/logo-app.png" alt="Yun-Zhi Logo" className="w-10 h-10 object-contain" />
                       </div>
                     )}
                   </div>
@@ -777,8 +777,8 @@ export default function ChatInterface() {
               {isLoading && messages[messages.length - 1]?.role === 'user' && (
                 <div className="flex gap-4 md:gap-6">
                   <div className="shrink-0 mt-1">
-                     <div className="w-10 h-10 rounded-full border border-zinc-200 flex items-center justify-center shadow-sm bg-white">
-                        <img src="/logo-app.png" alt="Yun-Zhi Logo" className="w-6 h-6 object-contain" />
+                     <div className="w-10 h-10 flex items-center justify-center">
+                        <img src="/logo-app.png" alt="Yun-Zhi Logo" className="w-10 h-10 object-contain" />
                       </div>
                   </div>
                   <div className="px-2 py-2">
