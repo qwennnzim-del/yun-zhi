@@ -574,13 +574,13 @@ export default function ChatInterface() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed bottom-0 left-0 right-0 z-[70] bg-white rounded-t-3xl shadow-2xl border-t border-zinc-200 p-6 md:max-w-md md:mx-auto md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:rounded-3xl"
+              className="fixed bottom-0 left-0 right-0 z-[70] bg-white dark:bg-zinc-900 rounded-t-3xl shadow-2xl border-t border-zinc-200 dark:border-zinc-800 p-6 md:max-w-md md:mx-auto md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:rounded-3xl"
             >
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-zinc-900">Pilih Model AI</h3>
+                <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Pilih Model AI</h3>
                 <button 
                   onClick={() => setShowModelSelector(false)}
-                  className="p-2 bg-zinc-100 hover:bg-zinc-200 rounded-full text-zinc-600 transition-colors"
+                  className="p-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-full text-zinc-600 dark:text-zinc-400 transition-colors"
                 >
                   <X size={20} />
                 </button>
@@ -594,21 +594,21 @@ export default function ChatInterface() {
                   }}
                   className={`w-full flex items-start gap-4 p-4 rounded-2xl border transition-all ${
                     selectedModel === 'gemini-2.5-flash' 
-                      ? 'border-indigo-500 bg-indigo-50/50' 
-                      : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
+                      ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-900/20' 
+                      : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
                   }`}
                 >
                   <div className={`mt-1 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                    selectedModel === 'gemini-2.5-flash' ? 'border-indigo-500' : 'border-zinc-300'
+                    selectedModel === 'gemini-2.5-flash' ? 'border-indigo-500' : 'border-zinc-300 dark:border-zinc-600'
                   }`}>
                     {selectedModel === 'gemini-2.5-flash' && <div className="w-2.5 h-2.5 bg-indigo-500 rounded-full" />}
                   </div>
                   <div className="text-left">
-                    <div className="font-semibold text-zinc-900 flex items-center gap-2">
+                    <div className="font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                       Yun-Zhi 2.5
-                      <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Default</span>
+                      <span className="text-[10px] bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Default</span>
                     </div>
-                    <div className="text-sm text-zinc-500 mt-1">Model cepat dan efisien untuk tugas sehari-hari. Gratis digunakan.</div>
+                    <div className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Model cepat dan efisien untuk tugas sehari-hari. Gratis digunakan.</div>
                   </div>
                 </button>
 
@@ -619,21 +619,21 @@ export default function ChatInterface() {
                   }}
                   className={`w-full flex items-start gap-4 p-4 rounded-2xl border transition-all ${
                     selectedModel === 'gemini-3-flash-preview' 
-                      ? 'border-indigo-500 bg-indigo-50/50' 
-                      : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
+                      ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-900/20' 
+                      : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
                   }`}
                 >
                   <div className={`mt-1 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                    selectedModel === 'gemini-3-flash-preview' ? 'border-indigo-500' : 'border-zinc-300'
+                    selectedModel === 'gemini-3-flash-preview' ? 'border-indigo-500' : 'border-zinc-300 dark:border-zinc-600'
                   }`}>
                     {selectedModel === 'gemini-3-flash-preview' && <div className="w-2.5 h-2.5 bg-indigo-500 rounded-full" />}
                   </div>
                   <div className="text-left">
-                    <div className="font-semibold text-zinc-900 flex items-center gap-2">
+                    <div className="font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                       Yun-Zhi 3
-                      <span className="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Preview</span>
+                      <span className="text-[10px] bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Preview</span>
                     </div>
-                    <div className="text-sm text-zinc-500 mt-1">Model terbaru dengan kemampuan penalaran lebih tinggi. Gratis digunakan.</div>
+                    <div className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Model terbaru dengan kemampuan penalaran lebih tinggi. Gratis digunakan.</div>
                   </div>
                 </button>
               </div>
@@ -902,7 +902,7 @@ export default function ChatInterface() {
                   <button
                     type="button"
                     onClick={() => setShowAttachmentMenu(!showAttachmentMenu)}
-                    className={`p-2.5 rounded-full transition-colors ${showAttachmentMenu ? 'bg-zinc-200 text-zinc-900' : 'text-zinc-500 hover:bg-zinc-200'}`}
+                    className={`p-2.5 rounded-full transition-colors ${showAttachmentMenu ? 'bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100' : 'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}`}
                     title="Lampirkan"
                   >
                     <Plus size={18} className={`transition-transform duration-200 ${showAttachmentMenu ? 'rotate-45' : ''}`} />
@@ -914,30 +914,30 @@ export default function ChatInterface() {
                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        className="absolute bottom-full left-0 mb-3 bg-white rounded-2xl shadow-xl border border-zinc-200 p-1.5 flex items-center gap-1 z-50"
+                        className="absolute bottom-full left-0 mb-3 bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-800 p-1.5 flex items-center gap-1 z-50"
                       >
                         <button
                           type="button"
                           onClick={() => imageInputRef.current?.click()}
-                          className="flex flex-col items-center justify-center w-16 h-14 rounded-xl hover:bg-zinc-100 text-zinc-600 hover:text-zinc-900 transition-colors gap-1"
+                          className="flex flex-col items-center justify-center w-16 h-14 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors gap-1"
                         >
                           <ImageIcon size={20} />
                           <span className="text-[10px] font-medium">Gambar</span>
                         </button>
-                        <div className="w-px h-8 bg-zinc-200 mx-0.5" />
+                        <div className="w-px h-8 bg-zinc-200 dark:bg-zinc-800 mx-0.5" />
                         <button
                           type="button"
                           onClick={() => fileInputRef.current?.click()}
-                          className="flex flex-col items-center justify-center w-16 h-14 rounded-xl hover:bg-zinc-100 text-zinc-600 hover:text-zinc-900 transition-colors gap-1"
+                          className="flex flex-col items-center justify-center w-16 h-14 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors gap-1"
                         >
                           <FileIcon size={20} />
                           <span className="text-[10px] font-medium">File</span>
                         </button>
-                        <div className="w-px h-8 bg-zinc-200 mx-0.5" />
+                        <div className="w-px h-8 bg-zinc-200 dark:bg-zinc-800 mx-0.5" />
                         <button
                           type="button"
                           onClick={() => cameraInputRef.current?.click()}
-                          className="flex flex-col items-center justify-center w-16 h-14 rounded-xl hover:bg-zinc-100 text-zinc-600 hover:text-zinc-900 transition-colors gap-1"
+                          className="flex flex-col items-center justify-center w-16 h-14 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors gap-1"
                         >
                           <Camera size={20} />
                           <span className="text-[10px] font-medium">Kamera</span>
@@ -949,18 +949,18 @@ export default function ChatInterface() {
                   <button
                     type="button"
                     onClick={() => setShowTools(!showTools)}
-                    className="p-2.5 text-zinc-500 hover:bg-zinc-200 rounded-full transition-colors relative"
+                    className="p-2.5 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-full transition-colors relative"
                     title="Tools"
                   >
                     <Wand2 size={18} />
                     {showTools && (
-                      <div className="absolute bottom-full left-0 mb-2 w-48 bg-white rounded-xl shadow-lg border border-zinc-100 p-2 flex flex-col gap-1 z-50">
-                        <div className="text-xs font-semibold text-zinc-400 px-2 py-1">Fitur</div>
-                        <button className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-50 rounded-lg text-sm text-zinc-600 text-left">
+                      <div className="absolute bottom-full left-0 mb-2 w-48 bg-white dark:bg-zinc-900 rounded-xl shadow-lg border border-zinc-100 dark:border-zinc-800 p-2 flex flex-col gap-1 z-50">
+                        <div className="text-xs font-semibold text-zinc-400 dark:text-zinc-500 px-2 py-1">Fitur</div>
+                        <button className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-lg text-sm text-zinc-600 dark:text-zinc-400 text-left">
                           <ImageIcon size={16} />
                           <span>Analisis Gambar</span>
                         </button>
-                        <button className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-50 rounded-lg text-sm text-zinc-600 text-left">
+                        <button className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-lg text-sm text-zinc-600 dark:text-zinc-400 text-left">
                           <Code size={16} />
                           <span>Code Interpreter</span>
                         </button>
@@ -975,8 +975,8 @@ export default function ChatInterface() {
                     disabled={(!input.trim() && !selectedFile) || isLoading}
                     className={`p-2.5 rounded-full transition-all ${
                       (input.trim() || selectedFile) && !isLoading 
-                        ? 'bg-zinc-900 text-white hover:bg-zinc-700 shadow-md' 
-                        : 'bg-zinc-300 text-zinc-500 cursor-not-allowed'
+                        ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-300 shadow-md' 
+                        : 'bg-zinc-300 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-500 cursor-not-allowed'
                     }`}
                   >
                     <ArrowUp size={18} strokeWidth={2.5} />
@@ -996,16 +996,16 @@ export default function ChatInterface() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-0 z-[100] bg-white overflow-y-auto flex flex-col"
+            className="fixed inset-0 z-[100] bg-white dark:bg-zinc-900 overflow-y-auto flex flex-col transition-colors duration-200"
           >
-            <div className="sticky top-0 bg-white/80 backdrop-blur-md z-10 flex items-center px-4 h-16 border-b border-zinc-100">
+            <div className="sticky top-0 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md z-10 flex items-center px-4 h-16 border-b border-zinc-100 dark:border-zinc-800">
               <button 
                 onClick={() => setShowSettings(false)}
-                className="p-2 -ml-2 hover:bg-zinc-100 rounded-full text-zinc-600 transition-colors"
+                className="p-2 -ml-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full text-zinc-600 dark:text-zinc-400 transition-colors"
               >
                 <ArrowLeft size={24} />
               </button>
-              <h2 className="text-2xl font-normal text-zinc-800 ml-4">Pengaturan Yun-Zhi</h2>
+              <h2 className="text-2xl font-normal text-zinc-800 dark:text-zinc-100 ml-4">Pengaturan Yun-Zhi</h2>
             </div>
             
             <div className="flex-1 max-w-3xl mx-auto w-full py-4 px-4 sm:px-6">
@@ -1016,14 +1016,14 @@ export default function ChatInterface() {
                     setShowSettings(false);
                     setShowPublicLinks(true);
                   }}
-                  className="flex items-start gap-4 p-4 hover:bg-zinc-50 rounded-2xl transition-colors cursor-pointer"
+                  className="flex items-start gap-4 p-4 hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-2xl transition-colors cursor-pointer"
                 >
                   <div className="mt-1 text-zinc-500 shrink-0">
                     <Link2 size={24} strokeWidth={1.5} />
                   </div>
                   <div>
-                    <h4 className="text-base font-medium text-zinc-900">Link publik Anda</h4>
-                    <p className="text-sm text-zinc-500 mt-0.5">Kontrol cara Anda membagikan percakapan dan respons</p>
+                    <h4 className="text-base font-medium text-zinc-900 dark:text-zinc-100">Link publik Anda</h4>
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">Kontrol cara Anda membagikan percakapan dan respons</p>
                   </div>
                 </div>
 
@@ -1045,46 +1045,46 @@ export default function ChatInterface() {
                 </div>
 
                 {/* Preferensi teks */}
-                <div className="flex items-start gap-4 p-4 hover:bg-zinc-50 rounded-2xl transition-colors cursor-pointer">
+                <div className="flex items-start gap-4 p-4 hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-2xl transition-colors cursor-pointer">
                   <div className="mt-1 text-zinc-500 shrink-0">
                     <FileText size={24} strokeWidth={1.5} />
                   </div>
                   <div>
-                    <h4 className="text-base font-medium text-zinc-900">Preferensi teks</h4>
-                    <p className="text-sm text-zinc-500 mt-0.5">Kelola teks perangkat untuk melihat teks dari respons Yun-Zhi Live</p>
+                    <h4 className="text-base font-medium text-zinc-900 dark:text-zinc-100">Preferensi teks</h4>
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">Kelola teks perangkat untuk melihat teks dari respons Yun-Zhi Live</p>
                   </div>
                 </div>
 
                 {/* Bahasa */}
-                <div className="flex items-start gap-4 p-4 hover:bg-zinc-50 rounded-2xl transition-colors cursor-pointer">
+                <div className="flex items-start gap-4 p-4 hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-2xl transition-colors cursor-pointer">
                   <div className="mt-1 text-zinc-500 shrink-0">
                     <Globe size={24} strokeWidth={1.5} />
                   </div>
                   <div>
-                    <h4 className="text-base font-medium text-zinc-900">Bahasa</h4>
-                    <p className="text-sm text-zinc-500 mt-0.5">Untuk bicara dengan Yun-Zhi</p>
+                    <h4 className="text-base font-medium text-zinc-900 dark:text-zinc-100">Bahasa</h4>
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">Untuk bicara dengan Yun-Zhi</p>
                   </div>
                 </div>
 
                 {/* Bicara dengan Yun-Zhi secara handsfree */}
-                <div className="flex items-start gap-4 p-4 hover:bg-zinc-50 rounded-2xl transition-colors cursor-pointer">
+                <div className="flex items-start gap-4 p-4 hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-2xl transition-colors cursor-pointer">
                   <div className="mt-1 text-zinc-500 shrink-0">
                     <MessageCircle size={24} strokeWidth={1.5} />
                   </div>
                   <div>
-                    <h4 className="text-base font-medium text-zinc-900">Bicara dengan Yun-Zhi secara handsfree</h4>
-                    <p className="text-sm text-zinc-500 mt-0.5">Ucapkan "Ok Google" untuk mendapatkan bantuan dari Yun-Zhi</p>
+                    <h4 className="text-base font-medium text-zinc-900 dark:text-zinc-100">Bicara dengan Yun-Zhi secara handsfree</h4>
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">Ucapkan "Ok Google" untuk mendapatkan bantuan dari Yun-Zhi</p>
                   </div>
                 </div>
 
                 {/* Konteks layar */}
-                <div className="flex items-start gap-4 p-4 hover:bg-zinc-50 rounded-2xl transition-colors cursor-pointer">
+                <div className="flex items-start gap-4 p-4 hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-2xl transition-colors cursor-pointer">
                   <div className="mt-1 text-zinc-500 shrink-0">
                     <Smartphone size={24} strokeWidth={1.5} />
                   </div>
                   <div>
-                    <h4 className="text-base font-medium text-zinc-900">Konteks layar</h4>
-                    <p className="text-sm text-zinc-500 mt-0.5">Izinkan Yun-Zhi mengambil informasi di layar Anda</p>
+                    <h4 className="text-base font-medium text-zinc-900 dark:text-zinc-100">Konteks layar</h4>
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">Izinkan Yun-Zhi mengambil informasi di layar Anda</p>
                   </div>
                 </div>
 
@@ -1094,14 +1094,14 @@ export default function ChatInterface() {
                     setShowSettings(false);
                     setShowDeleteAllConfirm(true);
                   }}
-                  className="flex items-start gap-4 p-4 hover:bg-red-50 rounded-2xl transition-colors cursor-pointer group"
+                  className="flex items-start gap-4 p-4 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-2xl transition-colors cursor-pointer group"
                 >
                   <div className="mt-1 text-red-500 shrink-0">
                     <Trash2 size={24} strokeWidth={1.5} />
                   </div>
                   <div>
-                    <h4 className="text-base font-medium text-red-600">Hapus Semua Riwayat</h4>
-                    <p className="text-sm text-red-500/80 mt-0.5">Hapus permanen semua percakapan dari perangkat dan server</p>
+                    <h4 className="text-base font-medium text-red-600 dark:text-red-400">Hapus Semua Riwayat</h4>
+                    <p className="text-sm text-red-500/80 dark:text-red-400/80 mt-0.5">Hapus permanen semua percakapan dari perangkat dan server</p>
                   </div>
                 </div>
               </div>
@@ -1118,39 +1118,39 @@ export default function ChatInterface() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-0 z-[110] bg-white overflow-y-auto flex flex-col"
+            className="fixed inset-0 z-[110] bg-white dark:bg-zinc-900 overflow-y-auto flex flex-col transition-colors duration-200"
           >
-            <div className="sticky top-0 bg-white/80 backdrop-blur-md z-10 flex items-center px-4 h-16 border-b border-zinc-100">
+            <div className="sticky top-0 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md z-10 flex items-center px-4 h-16 border-b border-zinc-100 dark:border-zinc-800">
               <button 
                 onClick={() => {
                   setShowPublicLinks(false);
                   setShowSettings(true);
                 }}
-                className="p-2 -ml-2 hover:bg-zinc-100 rounded-full text-zinc-600 transition-colors"
+                className="p-2 -ml-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full text-zinc-600 dark:text-zinc-400 transition-colors"
               >
                 <ArrowLeft size={24} />
               </button>
-              <h2 className="text-2xl font-normal text-zinc-800 ml-4">Link publik Anda</h2>
+              <h2 className="text-2xl font-normal text-zinc-800 dark:text-zinc-100 ml-4">Link publik Anda</h2>
             </div>
             
             <div className="flex-1 max-w-3xl mx-auto w-full py-6 px-4 sm:px-6">
               {chatHistory.filter(c => c.isPublic).length === 0 ? (
                 <div className="text-center mt-20">
-                  <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mx-auto mb-4 text-zinc-400">
+                  <div className="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4 text-zinc-400 dark:text-zinc-500">
                     <Link2 size={32} />
                   </div>
-                  <h3 className="text-lg font-medium text-zinc-900 mb-2">Belum ada link publik</h3>
-                  <p className="text-zinc-500 text-sm max-w-sm mx-auto">
+                  <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-2">Belum ada link publik</h3>
+                  <p className="text-zinc-500 dark:text-zinc-400 text-sm max-w-sm mx-auto">
                     Anda belum membagikan percakapan apa pun. Bagikan percakapan untuk membuat link publik.
                   </p>
                 </div>
               ) : (
                 <div className="space-y-4">
                   {chatHistory.filter(c => c.isPublic).map(chat => (
-                    <div key={chat.id} className="p-4 border border-zinc-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div key={chat.id} className="p-4 border border-zinc-200 dark:border-zinc-800 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div>
-                        <h4 className="font-medium text-zinc-900">{chat.title}</h4>
-                        <p className="text-sm text-zinc-500 mt-1">
+                        <h4 className="font-medium text-zinc-900 dark:text-zinc-100">{chat.title}</h4>
+                        <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
                           {chat.updatedAt?.toDate ? new Date(chat.updatedAt.toDate()).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Baru saja'}
                         </p>
                       </div>
@@ -1160,13 +1160,13 @@ export default function ChatInterface() {
                             navigator.clipboard.writeText(`${window.location.origin}/share/${chat.id}`);
                             alert('Link disalin!');
                           }}
-                          className="px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                          className="px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
                         >
                           <Copy size={14} /> Salin
                         </button>
                         <button 
                           onClick={() => handleRemovePublicLink(chat.id)}
-                          className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                          className="px-3 py-1.5 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
                         >
                           <Trash2 size={14} /> Hapus link
                         </button>
@@ -1196,31 +1196,31 @@ export default function ChatInterface() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed bottom-0 left-0 right-0 z-[70] bg-white rounded-t-3xl shadow-2xl border-t border-zinc-200 p-6 md:max-w-md md:mx-auto md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:rounded-3xl"
+              className="fixed bottom-0 left-0 right-0 z-[70] bg-white dark:bg-zinc-900 rounded-t-3xl shadow-2xl border-t border-zinc-200 dark:border-zinc-800 p-6 md:max-w-md md:mx-auto md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:rounded-3xl"
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center">
+                  <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center">
                     <Trash2 size={20} />
                   </div>
-                  <h3 className="text-lg font-semibold text-zinc-900">Hapus Semua Riwayat?</h3>
+                  <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Hapus Semua Riwayat?</h3>
                 </div>
                 <button 
                   onClick={() => setShowDeleteAllConfirm(false)}
-                  className="p-2 bg-zinc-100 hover:bg-zinc-200 rounded-full text-zinc-600 transition-colors"
+                  className="p-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-full text-zinc-600 dark:text-zinc-400 transition-colors"
                 >
                   <X size={20} />
                 </button>
               </div>
               
-              <p className="text-sm text-zinc-500 mb-6">
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
                 Tindakan ini akan menghapus semua percakapan Anda secara permanen dari perangkat dan server. Anda yakin ingin melanjutkan?
               </p>
               
               <div className="flex gap-3">
                 <button 
                   onClick={() => setShowDeleteAllConfirm(false)}
-                  className="flex-1 py-3 px-4 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-xl font-medium transition-colors"
+                  className="flex-1 py-3 px-4 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl font-medium transition-colors"
                 >
                   Batal
                 </button>
@@ -1251,19 +1251,19 @@ export default function ChatInterface() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="fixed z-[70] bg-white rounded-3xl shadow-2xl border border-zinc-200 p-6 w-[90%] max-w-sm left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center"
+              className="fixed z-[70] bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border border-zinc-200 dark:border-zinc-800 p-6 w-[90%] max-w-sm left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center"
             >
-              <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 text-red-500 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Trash2 size={32} />
               </div>
-              <h3 className="text-xl font-semibold text-zinc-900 mb-2">Hapus Percakapan?</h3>
-              <p className="text-sm text-zinc-500 mb-6">
+              <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-2">Hapus Percakapan?</h3>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
                 Percakapan ini akan dihapus secara permanen dari riwayat Anda. Tindakan ini tidak dapat dibatalkan.
               </p>
               <div className="flex gap-3">
                 <button 
                   onClick={() => setChatToDelete(null)}
-                  className="flex-1 py-3 px-4 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-xl font-medium transition-colors"
+                  className="flex-1 py-3 px-4 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl font-medium transition-colors"
                 >
                   Batal
                 </button>
