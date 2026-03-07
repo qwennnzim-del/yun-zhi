@@ -112,6 +112,36 @@ export default function ChatInterface() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [likedMessages, setLikedMessages] = useState<Set<string>>(new Set());
 
+  // Close popups when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.popup-container') && !target.closest('.sidebar-container') && !target.closest('.menu-button')) {
+        setShowAttachmentMenu(false);
+        setShowTools(false);
+        if (isMobile) setIsSidebarOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isMobile]);
+
+  // Load dark mode preference
+  useEffect(() => {
+    const savedDarkMode = localStorage.getItem('isDarkMode') === 'true';
+    setIsDarkMode(savedDarkMode);
+  }, []);
+
+  // Apply dark mode class and save preference
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('isDarkMode', isDarkMode.toString());
+  }, [isDarkMode]);
+
   const toggleLike = (id: string) => {
     setLikedMessages(prev => {
       const newSet = new Set(prev);
@@ -432,7 +462,7 @@ export default function ChatInterface() {
             className={`
               fixed lg:relative inset-y-0 left-0 z-50
               w-72 bg-zinc-50 dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 flex flex-col
-              shadow-xl lg:shadow-none transition-colors duration-200
+              shadow-xl lg:shadow-none transition-colors duration-200 sidebar-container
             `}
           >
             <div className="p-4 flex items-center justify-between">
@@ -901,7 +931,10 @@ export default function ChatInterface() {
                   
                   <button
                     type="button"
-                    onClick={() => setShowAttachmentMenu(!showAttachmentMenu)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowAttachmentMenu(!showAttachmentMenu);
+                    }}
                     className={`p-2.5 rounded-full transition-colors ${showAttachmentMenu ? 'bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100' : 'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'}`}
                     title="Lampirkan"
                   >
@@ -914,7 +947,7 @@ export default function ChatInterface() {
                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        className="absolute bottom-full left-0 mb-3 bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-800 p-1.5 flex items-center gap-1 z-50"
+                        className="absolute bottom-full left-0 mb-3 bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-800 p-1.5 flex items-center gap-1 z-50 popup-container"
                       >
                         <button
                           type="button"
@@ -948,13 +981,16 @@ export default function ChatInterface() {
 
                   <button
                     type="button"
-                    onClick={() => setShowTools(!showTools)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowTools(!showTools);
+                    }}
                     className="p-2.5 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-full transition-colors relative"
                     title="Tools"
                   >
                     <Wand2 size={18} />
                     {showTools && (
-                      <div className="absolute bottom-full left-0 mb-2 w-48 bg-white dark:bg-zinc-900 rounded-xl shadow-lg border border-zinc-100 dark:border-zinc-800 p-2 flex flex-col gap-1 z-50">
+                      <div className="absolute bottom-full left-0 mb-2 w-48 bg-white dark:bg-zinc-900 rounded-xl shadow-lg border border-zinc-100 dark:border-zinc-800 p-2 flex flex-col gap-1 z-50 popup-container">
                         <div className="text-xs font-semibold text-zinc-400 dark:text-zinc-500 px-2 py-1">Fitur</div>
                         <button className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-lg text-sm text-zinc-600 dark:text-zinc-400 text-left">
                           <ImageIcon size={16} />
