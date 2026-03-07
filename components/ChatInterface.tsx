@@ -149,15 +149,6 @@ export default function ChatInterface() {
     return () => unsubscribe();
   }, []);
 
-  // Apply dark mode class to html element
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDarkMode]);
-
   const loadChat = async (id: string) => {
     try {
       const docRef = doc(db, 'chats', id);
@@ -724,7 +715,7 @@ export default function ChatInterface() {
                 </h1>
                 <div className="text-lg text-zinc-500 font-light max-w-xl mx-auto space-y-4">
                   <p>
-                    I'm <strong>Yun-Zhi</strong>. How can I help you today?
+                    I&apos;m <strong>Yun-Zhi</strong>. How can I help you today?
                   </p>
                 </div>
               </motion.div>
