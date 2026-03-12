@@ -100,6 +100,7 @@ export default function ChatInterface() {
   // File upload state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSearchEnabled, setIsSearchEnabled] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   const [selectedSources, setSelectedSources] = useState<any[] | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
@@ -314,6 +315,7 @@ export default function ChatInterface() {
     setSelectedFile(null);
     setFilePreview(null);
     setIsLoading(true);
+    setIsSearching(isSearchEnabled);
 
     let activeChatId = currentChatId;
 
@@ -371,11 +373,16 @@ export default function ChatInterface() {
         timestamp: new Date().toISOString(),
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
-
       let fullText = '';
       let groundingChunks: any[] = [];
+      let isFirstChunk = true;
+
       for await (const chunk of result) {
+        if (isFirstChunk) {
+          setMessages(prev => [...prev, assistantMessage]);
+          isFirstChunk = false;
+        }
+
         const chunkText = chunk.text || '';
         fullText += chunkText;
         
@@ -388,6 +395,11 @@ export default function ChatInterface() {
             ? { ...msg, content: fullText, groundingChunks: groundingChunks.length > 0 ? groundingChunks : undefined } 
             : msg
         ));
+      }
+
+      // If stream was empty, still add the message
+      if (isFirstChunk) {
+        setMessages(prev => [...prev, assistantMessage]);
       }
 
       // Save final AI message to Firestore
@@ -834,7 +846,7 @@ export default function ChatInterface() {
                       </div>
                   </div>
                   <div className="px-2 py-2">
-                    {isSearchEnabled ? (
+                    {isSearching ? (
                       <div className="flex items-center gap-2">
                         <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg" className="animate-spin-slow">
                           <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -991,20 +1003,43 @@ export default function ChatInterface() {
                       e.stopPropagation();
                       setShowTools(!showTools);
                     }}
-                    className="p-2.5 text-zinc-500 hover:bg-zinc-200 rounded-full transition-colors relative"
+                    className={`p-2.5 rounded-full transition-colors relative ${isSearchEnabled ? 'text-blue-600 bg-blue-50 hover:bg-blue-100' : 'text-zinc-500 hover:bg-zinc-200'}`}
                     title="Tools"
                   >
                     <Wand2 size={18} />
+                    {isSearchEnabled && (
+                      <span className="absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full border-2 border-white"></span>
+                    )}
                     {showTools && (
                       <div className="absolute bottom-full left-0 mb-2 w-48 bg-white rounded-xl shadow-lg border border-zinc-100 p-2 flex flex-col gap-1 z-50 popup-container">
                         <div className="text-xs font-semibold text-zinc-400 px-2 py-1">Fitur</div>
-                        <button className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-200 rounded-lg text-sm text-zinc-600 text-left">
+                        <button 
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            imageInputRef.current?.click();
+                            setShowTools(false);
+                          }}
+                          className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-200 rounded-lg text-sm text-zinc-600 text-left w-full"
+                        >
                           <ImageIcon size={16} />
                           <span>Analisis Gambar</span>
                         </button>
-                        <button className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-200 rounded-lg text-sm text-zinc-600 text-left">
-                          <Code size={16} />
-                          <span>Code Interpreter</span>
+                        <button 
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsSearchEnabled(!isSearchEnabled);
+                            setShowTools(false);
+                          }}
+                          className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm text-left w-full transition-colors ${
+                            isSearchEnabled 
+                              ? 'bg-blue-50 text-blue-600 hover:bg-blue-100' 
+                              : 'text-zinc-600 hover:bg-zinc-200'
+                          }`}
+                        >
+                          <Globe size={16} className={isSearchEnabled ? "text-blue-500" : ""} />
+                          <span>{isSearchEnabled ? 'Pencarian Aktif' : 'Cari di Web'}</span>
                         </button>
                       </div>
                     )}
