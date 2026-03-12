@@ -364,7 +364,7 @@ export default function ChatInterface() {
       }
       messageParts.push({ text: userMessage.content });
 
-      const result = await chat.sendMessageStream({ message: messageParts });
+      const result = await chat.sendMessageStream({ message: { parts: messageParts } });
       
       let assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
