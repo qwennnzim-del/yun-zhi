@@ -42,7 +42,8 @@ import {
   Smartphone,
   Share2,
   ThumbsUp,
-  Loader2
+  Loader2,
+  Video
 } from 'lucide-react';
 
 // Initialize Gemini
@@ -108,12 +109,20 @@ export default function ChatInterface() {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   // Settings & Delete state
   const [showSettings, setShowSettings] = useState(false);
   const [chatToDelete, setChatToDelete] = useState<string | null>(null);
   const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
-    const [likedMessages, setLikedMessages] = useState<Set<string>>(new Set());
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const [likedMessages, setLikedMessages] = useState<Set<string>>(new Set());
 
   // Close popups when clicking outside
   useEffect(() => {
@@ -206,10 +215,17 @@ export default function ChatInterface() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Check file size (limit to 20MB for inline data)
+      if (file.size > 20 * 1024 * 1024) {
+        showToast('Ukuran file terlalu besar. Maksimal 20MB.');
+        return;
+      }
       setSelectedFile(file);
       if (file.type.startsWith('image/')) {
         const url = URL.createObjectURL(file);
         setFilePreview(url);
+      } else if (file.type.startsWith('video/')) {
+        setFilePreview('video');
       } else {
         setFilePreview('file'); // Special string to denote non-image file
       }
@@ -219,11 +235,12 @@ export default function ChatInterface() {
     if (imageInputRef.current) imageInputRef.current.value = '';
     if (fileInputRef.current) fileInputRef.current.value = '';
     if (cameraInputRef.current) cameraInputRef.current.value = '';
+    if (videoInputRef.current) videoInputRef.current.value = '';
   };
 
   const removeFile = () => {
     setSelectedFile(null);
-    if (filePreview && filePreview !== 'file') {
+    if (filePreview && filePreview !== 'file' && filePreview !== 'video') {
       URL.revokeObjectURL(filePreview);
     }
     setFilePreview(null);
@@ -261,7 +278,7 @@ export default function ChatInterface() {
       });
       const shareUrl = `${window.location.origin}/share/${currentChatId}`;
       await navigator.clipboard.writeText(shareUrl);
-      alert('Link publik berhasil disalin ke clipboard!');
+      showToast('Link publik berhasil disalin ke clipboard!');
     } catch (error) {
       console.error("Error sharing chat:", error);
     }
@@ -290,6 +307,8 @@ export default function ChatInterface() {
       mimeType = selectedFile.type || 'text/plain';
       if (mimeType.startsWith('image/')) {
         attachmentUrl = URL.createObjectURL(selectedFile);
+      } else if (mimeType.startsWith('video/')) {
+        attachmentUrl = 'video';
       } else {
         attachmentUrl = 'file'; // Special marker for non-image files
       }
@@ -298,7 +317,7 @@ export default function ChatInterface() {
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: input.trim() || (selectedFile ? (mimeType.startsWith('image/') ? "Tolong analisis gambar ini." : "Tolong analisis dokumen ini.") : ''),
+      content: input.trim() || (selectedFile ? (mimeType.startsWith('image/') ? "Tolong analisis gambar ini." : mimeType.startsWith('video/') ? "Tolong analisis video ini." : "Tolong analisis dokumen ini.") : ''),
       timestamp: new Date().toISOString(),
     };
 
@@ -583,6 +602,13 @@ export default function ChatInterface() {
           />
         )}
       </AnimatePresence>
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-zinc-800 text-white px-4 py-2 rounded-full shadow-lg text-sm font-medium animate-in fade-in slide-in-from-top-4">
+          {toastMessage}
+        </div>
+      )}
 
       {/* Sidebar */}
       <AnimatePresence mode="wait">
@@ -933,7 +959,7 @@ export default function ChatInterface() {
                       <div className={`prose max-w-none leading-relaxed ${
                         message.role === 'user' ? 'prose-zinc text-zinc-800 text-right' : 'prose-zinc text-zinc-800'
                       }`}>
-                        {message.attachmentUrl && message.attachmentUrl !== 'file' && (
+                        {message.attachmentUrl && message.attachmentUrl !== 'file' && message.attachmentUrl !== 'video' && (
                           <div className={`mb-3 ${message.role === 'user' ? 'flex justify-end' : 'flex justify-start'}`}>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={message.attachmentUrl} alt="Attachment" className="max-w-[200px] rounded-2xl border border-zinc-200 shadow-sm" />
@@ -947,6 +973,17 @@ export default function ChatInterface() {
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-zinc-900 truncate">Dokumen Terlampir</p>
                               <p className="text-xs text-zinc-500">File</p>
+                            </div>
+                          </div>
+                        )}
+                        {message.attachmentUrl === 'video' && (
+                          <div className={`mb-3 flex items-center gap-3 p-3 rounded-2xl border border-zinc-200 bg-zinc-50 shadow-sm max-w-[250px] ${message.role === 'user' ? 'ml-auto' : 'mr-auto'}`}>
+                            <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
+                              <Video size={20} className="text-indigo-600" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-zinc-900 truncate">Video Terlampir</p>
+                              <p className="text-xs text-zinc-500">Video</p>
                             </div>
                           </div>
                         )}
@@ -1049,6 +1086,10 @@ export default function ChatInterface() {
                       <div className="h-16 w-16 rounded-xl border border-zinc-200 shadow-sm bg-indigo-50 flex items-center justify-center">
                         <FileIcon size={24} className="text-indigo-500" />
                       </div>
+                    ) : filePreview === 'video' ? (
+                      <div className="h-16 w-16 rounded-xl border border-zinc-200 shadow-sm bg-indigo-50 flex items-center justify-center">
+                        <Video size={24} className="text-indigo-500" />
+                      </div>
                     ) : (
                       /* eslint-disable-next-line @next/next/no-img-element */
                       <img src={filePreview} alt="Preview" className="h-16 w-16 object-cover rounded-xl border border-zinc-200 shadow-sm" />
@@ -1108,6 +1149,13 @@ export default function ChatInterface() {
                     ref={cameraInputRef} 
                     onChange={handleFileChange} 
                   />
+                  <input 
+                    type="file" 
+                    accept="video/*" 
+                    className="hidden" 
+                    ref={videoInputRef} 
+                    onChange={handleFileChange} 
+                  />
                   
                   <button
                     type="button"
@@ -1154,6 +1202,15 @@ export default function ChatInterface() {
                         >
                           <Camera size={20} />
                           <span className="text-[10px] font-medium">Kamera</span>
+                        </button>
+                        <div className="w-px h-8 bg-zinc-200 mx-0.5" />
+                        <button
+                          type="button"
+                          onClick={() => videoInputRef.current?.click()}
+                          className="flex flex-col items-center justify-center w-16 h-14 rounded-xl hover:bg-zinc-100 text-zinc-600 hover:text-zinc-900 transition-colors gap-1"
+                        >
+                          <Video size={20} />
+                          <span className="text-[10px] font-medium">Video</span>
                         </button>
                       </motion.div>
                     )}
@@ -1389,7 +1446,7 @@ export default function ChatInterface() {
                         <button 
                           onClick={() => {
                             navigator.clipboard.writeText(`${window.location.origin}/share/${chat.id}`);
-                            alert('Link disalin!');
+                            showToast('Link disalin!');
                           }}
                           className="px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
                         >
