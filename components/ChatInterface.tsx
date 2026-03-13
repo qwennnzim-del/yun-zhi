@@ -1074,7 +1074,98 @@ export default function ChatInterface() {
 
         {/* Input Area */}
         <div className="p-4 bg-white shrink-0 transition-colors duration-200">
-          <div className="max-w-3xl mx-auto chat-input-wrapper">
+          <div className="max-w-3xl mx-auto relative">
+            
+            {/* Popups moved outside the overflow-hidden wrapper */}
+            <AnimatePresence>
+              {showAttachmentMenu && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  className="absolute bottom-full left-4 mb-4 bg-white rounded-2xl shadow-xl border border-zinc-200 p-1.5 flex items-center gap-1 z-50 popup-container"
+                >
+                  <button
+                    type="button"
+                    onClick={() => imageInputRef.current?.click()}
+                    className="flex flex-col items-center justify-center w-16 h-14 rounded-xl hover:bg-zinc-100 text-zinc-600 hover:text-zinc-900 transition-colors gap-1"
+                  >
+                    <ImageIcon size={20} />
+                    <span className="text-[10px] font-medium">Gambar</span>
+                  </button>
+                  <div className="w-px h-8 bg-zinc-200 mx-0.5" />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex flex-col items-center justify-center w-16 h-14 rounded-xl hover:bg-zinc-100 text-zinc-600 hover:text-zinc-900 transition-colors gap-1"
+                  >
+                    <FileIcon size={20} />
+                    <span className="text-[10px] font-medium">File</span>
+                  </button>
+                  <div className="w-px h-8 bg-zinc-200 mx-0.5" />
+                  <button
+                    type="button"
+                    onClick={() => cameraInputRef.current?.click()}
+                    className="flex flex-col items-center justify-center w-16 h-14 rounded-xl hover:bg-zinc-100 text-zinc-600 hover:text-zinc-900 transition-colors gap-1"
+                  >
+                    <Camera size={20} />
+                    <span className="text-[10px] font-medium">Kamera</span>
+                  </button>
+                  <div className="w-px h-8 bg-zinc-200 mx-0.5" />
+                  <button
+                    type="button"
+                    onClick={() => videoInputRef.current?.click()}
+                    className="flex flex-col items-center justify-center w-16 h-14 rounded-xl hover:bg-zinc-100 text-zinc-600 hover:text-zinc-900 transition-colors gap-1"
+                  >
+                    <Video size={20} />
+                    <span className="text-[10px] font-medium">Video</span>
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+              {showTools && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  className="absolute bottom-full left-16 mb-4 w-48 bg-white rounded-xl shadow-lg border border-zinc-100 p-2 flex flex-col gap-1 z-50 popup-container"
+                >
+                  <div className="text-xs font-semibold text-zinc-400 px-2 py-1">Fitur</div>
+                  <button 
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      imageInputRef.current?.click();
+                      setShowTools(false);
+                    }}
+                    className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-200 rounded-lg text-sm text-zinc-600 text-left w-full"
+                  >
+                    <ImageIcon size={16} />
+                    <span>Analisis Gambar</span>
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsSearchEnabled(!isSearchEnabled);
+                      setShowTools(false);
+                    }}
+                    className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm text-left w-full transition-colors ${
+                      isSearchEnabled 
+                        ? 'bg-blue-50 text-blue-600 hover:bg-blue-100' 
+                        : 'text-zinc-600 hover:bg-zinc-200'
+                    }`}
+                  >
+                    <Globe size={16} className={isSearchEnabled ? "text-blue-500" : ""} />
+                    <span>{isSearchEnabled ? 'Pencarian Aktif' : 'Cari di Web'}</span>
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <div className="chat-input-wrapper">
             <form 
               onSubmit={handleSubmit}
               className="chat-input-inner p-3 shadow-sm focus-within:ring-1 focus-within:ring-zinc-200 transition-all"
@@ -1163,58 +1254,11 @@ export default function ChatInterface() {
                       e.stopPropagation();
                       setShowAttachmentMenu(!showAttachmentMenu);
                     }}
-                    className={`p-2.5 rounded-full transition-colors ${showAttachmentMenu ? 'bg-zinc-200 text-zinc-900' : 'text-zinc-500 hover'}`}
+                    className={`p-2.5 rounded-full transition-colors ${showAttachmentMenu ? 'bg-zinc-200 text-zinc-900' : 'text-zinc-500 hover:bg-zinc-200'}`}
                     title="Lampirkan"
                   >
                     <Plus size={18} className={`transition-transform duration-200 ${showAttachmentMenu ? 'rotate-45' : ''}`} />
                   </button>
-
-                  <AnimatePresence>
-                    {showAttachmentMenu && (
-                      <motion.div 
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        className="absolute bottom-full left-0 mb-3 bg-white rounded-2xl shadow-xl border border-zinc-200 p-1.5 flex items-center gap-1 z-50 popup-container"
-                      >
-                        <button
-                          type="button"
-                          onClick={() => imageInputRef.current?.click()}
-                          className="flex flex-col items-center justify-center w-16 h-14 rounded-xl hover:bg-zinc-100 text-zinc-600 hover:text-zinc-900 transition-colors gap-1"
-                        >
-                          <ImageIcon size={20} />
-                          <span className="text-[10px] font-medium">Gambar</span>
-                        </button>
-                        <div className="w-px h-8 bg-zinc-200 mx-0.5" />
-                        <button
-                          type="button"
-                          onClick={() => fileInputRef.current?.click()}
-                          className="flex flex-col items-center justify-center w-16 h-14 rounded-xl hover:bg-zinc-100 text-zinc-600 hover:text-zinc-900 transition-colors gap-1"
-                        >
-                          <FileIcon size={20} />
-                          <span className="text-[10px] font-medium">File</span>
-                        </button>
-                        <div className="w-px h-8 bg-zinc-200 mx-0.5" />
-                        <button
-                          type="button"
-                          onClick={() => cameraInputRef.current?.click()}
-                          className="flex flex-col items-center justify-center w-16 h-14 rounded-xl hover:bg-zinc-100 text-zinc-600 hover:text-zinc-900 transition-colors gap-1"
-                        >
-                          <Camera size={20} />
-                          <span className="text-[10px] font-medium">Kamera</span>
-                        </button>
-                        <div className="w-px h-8 bg-zinc-200 mx-0.5" />
-                        <button
-                          type="button"
-                          onClick={() => videoInputRef.current?.click()}
-                          className="flex flex-col items-center justify-center w-16 h-14 rounded-xl hover:bg-zinc-100 text-zinc-600 hover:text-zinc-900 transition-colors gap-1"
-                        >
-                          <Video size={20} />
-                          <span className="text-[10px] font-medium">Video</span>
-                        </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
 
                   <button
                     type="button"
@@ -1228,39 +1272,6 @@ export default function ChatInterface() {
                     <Wand2 size={18} />
                     {isSearchEnabled && (
                       <span className="absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full border-2 border-white"></span>
-                    )}
-                    {showTools && (
-                      <div className="absolute bottom-full left-0 mb-2 w-48 bg-white rounded-xl shadow-lg border border-zinc-100 p-2 flex flex-col gap-1 z-50 popup-container">
-                        <div className="text-xs font-semibold text-zinc-400 px-2 py-1">Fitur</div>
-                        <button 
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            imageInputRef.current?.click();
-                            setShowTools(false);
-                          }}
-                          className="flex items-center gap-2 px-2 py-1.5 hover:bg-zinc-200 rounded-lg text-sm text-zinc-600 text-left w-full"
-                        >
-                          <ImageIcon size={16} />
-                          <span>Analisis Gambar</span>
-                        </button>
-                        <button 
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setIsSearchEnabled(!isSearchEnabled);
-                            setShowTools(false);
-                          }}
-                          className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm text-left w-full transition-colors ${
-                            isSearchEnabled 
-                              ? 'bg-blue-50 text-blue-600 hover:bg-blue-100' 
-                              : 'text-zinc-600 hover:bg-zinc-200'
-                          }`}
-                        >
-                          <Globe size={16} className={isSearchEnabled ? "text-blue-500" : ""} />
-                          <span>{isSearchEnabled ? 'Pencarian Aktif' : 'Cari di Web'}</span>
-                        </button>
-                      </div>
                     )}
                   </button>
                 </div>
@@ -1280,6 +1291,7 @@ export default function ChatInterface() {
                 </div>
               </div>
             </form>
+            </div>
           </div>
         </div>
       </main>
