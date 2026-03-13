@@ -317,6 +317,64 @@ export default function ChatInterface() {
     setIsLoading(true);
     setIsSearching(isSearchEnabled);
 
+    // RATE LIMIT CHECK FOR YUN-ZHI 3
+    if (selectedModel === 'gemini-3-flash-preview') {
+      const usageDataStr = localStorage.getItem('yunZhi3Usage');
+      let usageData = usageDataStr ? JSON.parse(usageDataStr) : { count: 0, resetAt: null };
+      const now = new Date();
+      
+      if (usageData.resetAt && now.getTime() > new Date(usageData.resetAt).getTime()) {
+        usageData = { count: 0, resetAt: null };
+      }
+      
+      if (usageData.count >= 5) {
+        const resetDate = new Date(usageData.resetAt);
+        const formattedDate = resetDate.toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta', day: '2-digit', month: 'long', year: 'numeric' });
+        const formattedTime = resetDate.toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit' }).replace('.', ':') + ' WIB';
+        
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'model',
+          content: `Akses ke model **Yun-Zhi 3** Anda telah dibatasi (batas 5 pertanyaan per hari). Silakan gunakan lagi pada tanggal **${formattedDate} pukul ${formattedTime}**.\n\nSementara itu, Anda tetap dapat menggunakan model **Yun-Zhi 2.5** tanpa batas.`,
+          timestamp: new Date().toISOString(),
+        };
+        
+        const finalMessages = [...newMessages, errorMessage];
+        setMessages(finalMessages);
+        setIsLoading(false);
+        setIsSearching(false);
+        
+        // Save to Firestore
+        try {
+          if (currentChatId) {
+            await updateDoc(doc(db, 'chats', currentChatId), {
+              messages: finalMessages,
+              updatedAt: serverTimestamp()
+            });
+          } else {
+            const newChatRef = doc(collection(db, 'chats'));
+            setCurrentChatId(newChatRef.id);
+            await setDoc(newChatRef, {
+              title: userMessage.content.slice(0, 30) || 'Percakapan Baru',
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
+              messages: finalMessages
+            });
+          }
+        } catch (err) {
+          console.error("Error saving rate limit message:", err);
+        }
+        return;
+      }
+      
+      // Increment usage if under limit
+      if (usageData.count === 0) {
+        usageData.resetAt = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
+      }
+      usageData.count += 1;
+      localStorage.setItem('yunZhi3Usage', JSON.stringify(usageData));
+    }
+
     let activeChatId = currentChatId;
 
     try {
@@ -364,7 +422,7 @@ export default function ChatInterface() {
       }
       messageParts.push({ text: userMessage.content });
 
-      const result = await chat.sendMessageStream({ message: { parts: messageParts } });
+      const result = await chat.sendMessageStream({ message: messageParts });
       
       let assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
