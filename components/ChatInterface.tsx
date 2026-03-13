@@ -375,6 +375,64 @@ export default function ChatInterface() {
       localStorage.setItem('yunZhi3Usage', JSON.stringify(usageData));
     }
 
+    // RATE LIMIT CHECK FOR YUN-ZHI 3.5 PRO
+    if (selectedModel === 'gemini-3.1-pro-preview') {
+      const usageDataStr = localStorage.getItem('yunZhi35Usage');
+      let usageData = usageDataStr ? JSON.parse(usageDataStr) : { count: 0, resetAt: null };
+      const now = new Date();
+      
+      if (usageData.resetAt && now.getTime() > new Date(usageData.resetAt).getTime()) {
+        usageData = { count: 0, resetAt: null };
+      }
+      
+      if (usageData.count >= 5) {
+        const resetDate = new Date(usageData.resetAt);
+        const formattedDate = resetDate.toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta', day: '2-digit', month: 'long', year: 'numeric' });
+        const formattedTime = resetDate.toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit' }).replace('.', ':') + ' WIB';
+        
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'model',
+          content: `Akses ke model **Yun-Zhi 3.5 Pro** Anda telah dibatasi (batas 5 pertanyaan per hari). Silakan gunakan lagi pada tanggal **${formattedDate} pukul ${formattedTime}**.\n\nSementara itu, Anda tetap dapat menggunakan model **Yun-Zhi 2.5** tanpa batas.`,
+          timestamp: new Date().toISOString(),
+        };
+        
+        const finalMessages = [...newMessages, errorMessage];
+        setMessages(finalMessages);
+        setIsLoading(false);
+        setIsSearching(false);
+        
+        // Save to Firestore
+        try {
+          if (currentChatId) {
+            await updateDoc(doc(db, 'chats', currentChatId), {
+              messages: finalMessages,
+              updatedAt: serverTimestamp()
+            });
+          } else {
+            const newChatRef = doc(collection(db, 'chats'));
+            setCurrentChatId(newChatRef.id);
+            await setDoc(newChatRef, {
+              title: userMessage.content.slice(0, 30) || 'Percakapan Baru',
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
+              messages: finalMessages
+            });
+          }
+        } catch (err) {
+          console.error("Error saving rate limit message:", err);
+        }
+        return;
+      }
+      
+      // Increment usage if under limit
+      if (usageData.count === 0) {
+        usageData.resetAt = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
+      }
+      usageData.count += 1;
+      localStorage.setItem('yunZhi35Usage', JSON.stringify(usageData));
+    }
+
     let activeChatId = currentChatId;
 
     try {
@@ -395,10 +453,20 @@ export default function ChatInterface() {
         });
       }
 
+      let systemInstruction = "You are Yun-Zhi, an advanced AI assistant developed by M Fariz Alfauzi at Zent Technology Inc. You are helpful, creative, and friendly.";
+      
+      if (selectedModel === 'gemini-2.5-flash') {
+        systemInstruction += " Your responses should be clear, concise, and formatted nicely using Markdown where appropriate. Answer directly and quickly.";
+      } else if (selectedModel === 'gemini-3-flash-preview') {
+        systemInstruction += " You are simulating a highly capable model with strong reasoning, mathematics, and coding skills. Before answering, think step-by-step. Provide detailed, logical explanations and robust code.";
+      } else if (selectedModel === 'gemini-3.1-pro-preview') {
+        systemInstruction += " You are simulating an elite, expert-level AI model designed for complex problem-solving, advanced mathematics, and enterprise-grade coding. You must perform deep, rigorous reasoning before providing an answer. Break down complex problems into exhaustive steps, consider edge cases, and provide highly optimized, flawless solutions.";
+      }
+
       const chat = genAI.chats.create({
-        model: selectedModel,
+        model: 'gemini-2.5-flash', // Always use 2.5 flash under the hood
         config: {
-          systemInstruction: "You are Yun-Zhi, an advanced AI assistant developed by M Fariz Alfauzi at Zent Technology Inc. You are helpful, creative, and friendly. Your responses should be clear, concise, and formatted nicely using Markdown where appropriate.",
+          systemInstruction: systemInstruction,
           ...(isSearchEnabled ? { tools: [{ googleSearch: {} }] } : {})
         },
         history: messages.filter(m => m.content.trim() || m.inlineData).map(m => {
@@ -720,6 +788,31 @@ export default function ChatInterface() {
                     <div className="text-sm text-zinc-500 mt-1">Model terbaru dengan kemampuan penalaran lebih tinggi. Gratis digunakan.</div>
                   </div>
                 </button>
+
+                <button
+                  onClick={() => {
+                    setSelectedModel('gemini-3.1-pro-preview');
+                    setShowModelSelector(false);
+                  }}
+                  className={`w-full flex items-start gap-4 p-4 rounded-2xl border transition-all ${
+                    selectedModel === 'gemini-3.1-pro-preview' 
+                      ? 'border-indigo-500 bg-indigo-50/50' 
+                      : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
+                  }`}
+                >
+                  <div className={`mt-1 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                    selectedModel === 'gemini-3.1-pro-preview' ? 'border-indigo-500' : 'border-zinc-300'
+                  }`}>
+                    {selectedModel === 'gemini-3.1-pro-preview' && <div className="w-2.5 h-2.5 bg-indigo-500 rounded-full" />}
+                  </div>
+                  <div className="text-left">
+                    <div className="font-semibold text-zinc-900 flex items-center gap-2">
+                      Yun-Zhi 3.5 Pro
+                      <span className="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">New</span>
+                    </div>
+                    <div className="text-sm text-zinc-500 mt-1">Model paling canggih untuk penalaran kompleks, matematika, dan coding.</div>
+                  </div>
+                </button>
               </div>
             </motion.div>
           </>
@@ -745,7 +838,7 @@ export default function ChatInterface() {
                 className="flex items-center gap-1.5 text-xs bg-zinc-100 hover:bg-zinc-200 px-2.5 py-1.5 rounded-lg text-zinc-600 font-medium transition-colors"
               >
                 <img src="/logo-app.png" alt="Yun-Zhi Logo" className="w-5 h-5 object-contain" />
-                {selectedModel === 'gemini-3-flash-preview' ? 'Yun-Zhi 3' : 'Yun-Zhi 2.5'}
+                {selectedModel === 'gemini-3.1-pro-preview' ? 'Yun-Zhi 3.5 Pro' : selectedModel === 'gemini-3-flash-preview' ? 'Yun-Zhi 3' : 'Yun-Zhi 2.5'}
                 <ChevronUp size={14} className="rotate-180 text-zinc-400" />
               </button>
             </div>
