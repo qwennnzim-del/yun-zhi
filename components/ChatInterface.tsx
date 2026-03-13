@@ -482,25 +482,18 @@ export default function ChatInterface() {
         systemInstruction += " You are simulating an elite, expert-level AI model designed for complex problem-solving, advanced mathematics, and enterprise-grade coding. You must perform deep, rigorous reasoning before providing an answer. Break down complex problems into exhaustive steps, consider edge cases, and provide highly optimized, flawless solutions.";
       }
 
-      const chat = genAI.chats.create({
-        model: 'gemini-2.5-flash', // Always use 2.5 flash under the hood
-        config: {
-          systemInstruction: systemInstruction,
-          ...(isSearchEnabled ? { tools: [{ googleSearch: {} }] } : {})
-        },
-        history: messages.filter(m => m.content.trim() || m.inlineData).map(m => {
-          const parts: any[] = [];
-          if (m.inlineData) {
-            parts.push({ inlineData: m.inlineData });
-          }
-          if (m.content.trim()) {
-            parts.push({ text: m.content });
-          }
-          return {
-            role: m.role,
-            parts
-          };
-        })
+      const contents = messages.filter(m => m.content.trim() || m.inlineData).map(m => {
+        const parts: any[] = [];
+        if (m.inlineData) {
+          parts.push({ inlineData: m.inlineData });
+        }
+        if (m.content.trim()) {
+          parts.push({ text: m.content });
+        }
+        return {
+          role: m.role,
+          parts
+        };
       });
 
       const messageParts: any[] = [];
@@ -509,7 +502,16 @@ export default function ChatInterface() {
       }
       messageParts.push({ text: userMessage.content });
 
-      const result = await chat.sendMessageStream({ message: messageParts });
+      contents.push({ role: 'user', parts: messageParts });
+
+      const result = await genAI.models.generateContentStream({
+        model: 'gemini-2.5-flash', // Always use 2.5 flash under the hood
+        contents: contents,
+        config: {
+          systemInstruction: systemInstruction,
+          ...(isSearchEnabled ? { tools: [{ googleSearch: {} }] } : {})
+        }
+      });
       
       let assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -939,20 +941,19 @@ export default function ChatInterface() {
                     message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
                   }`}
                 >
-                  <div className="shrink-0 mt-1">
-                    {message.role === 'user' ? (
+                  {message.role === 'user' && (
+                    <div className="shrink-0 mt-1">
                       <div className="w-10 h-10 rounded-full bg-zinc-200 flex items-center justify-center text-zinc-500 text-xs font-bold hidden sm:flex">
                         U
                       </div>
-                    ) : (
-                      <div className="w-10 h-10 flex items-center justify-center">
-                        <img src="/logo-app.png" alt="Yun-Zhi Logo" className="w-10 h-10 object-contain" />
-                      </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                   <div className={`flex-1 min-w-0 flex flex-col ${
                     message.role === 'user' ? 'items-end' : 'items-start'
                   }`}>
+                    {message.role === 'model' && (
+                      <div className="text-sm font-semibold text-zinc-700 mb-1 ml-2">Yun Zhi</div>
+                    )}
                     <div className={`
                       max-w-[90%] sm:max-w-[85%] px-2
                     `}>
@@ -1039,31 +1040,41 @@ export default function ChatInterface() {
               ))}
               {isLoading && messages[messages.length - 1]?.role === 'user' && (
                 <div className="flex gap-4 md:gap-6">
-                  <div className="shrink-0 mt-1">
-                     <div className="w-10 h-10 flex items-center justify-center">
-                        <img src="/logo-app.png" alt="Yun-Zhi Logo" className="w-10 h-10 object-contain" />
+                  <div className="flex-1 min-w-0 flex flex-col items-start">
+                    <div className="text-sm font-semibold text-zinc-700 mb-1 ml-2">Yun Zhi</div>
+                    <div className="flex items-center gap-3 px-2 py-2">
+                      <div className="shrink-0">
+                        <div className="loader">
+                          <svg width="100" height="100" viewBox="0 0 100 100">
+                            <defs>
+                              <mask id="clipping">
+                                <polygon points="0,0 100,0 100,100 0,100" fill="black"></polygon>
+                                <polygon points="25,25 75,25 50,75" fill="white"></polygon>
+                                <polygon points="50,25 75,75 25,75" fill="white"></polygon>
+                                <polygon points="35,35 65,35 50,65" fill="white"></polygon>
+                                <polygon points="35,35 65,35 50,65" fill="white"></polygon>
+                                <polygon points="35,35 65,35 50,65" fill="white"></polygon>
+                                <polygon points="35,35 65,35 50,65" fill="white"></polygon>
+                              </mask>
+                            </defs>
+                          </svg>
+                          <div className="box"></div>
+                        </div>
                       </div>
-                  </div>
-                  <div className="px-2 py-2">
-                    {isSearching ? (
-                      <div className="flex items-center gap-2">
-                        <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg" className="animate-spin-slow">
-                          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                        </svg>
-                        <span className="font-medium bg-clip-text text-transparent bg-gradient-to-r from-[#4285F4] via-[#EA4335] via-[#FBBC05] to-[#34A853] animate-pulse">Searching...</span>
+                      <div className="text-sm">
+                        {isSearching ? (
+                          <span className="font-medium bg-clip-text text-transparent bg-gradient-to-r from-[#4285F4] via-[#EA4335] via-[#FBBC05] to-[#34A853] animate-pulse">Searching...</span>
+                        ) : (
+                          <motion.span 
+                            animate={{ opacity: [0.4, 1, 0.4] }} 
+                            transition={{ repeat: Infinity, duration: 1.5 }}
+                            className="text-zinc-500 font-medium"
+                          >
+                            Thinking...
+                          </motion.span>
+                        )}
                       </div>
-                    ) : (
-                      <motion.span 
-                        animate={{ opacity: [0.4, 1, 0.4] }} 
-                        transition={{ repeat: Infinity, duration: 1.5 }}
-                        className="text-zinc-500 font-medium"
-                      >
-                        Thinking...
-                      </motion.span>
-                    )}
+                    </div>
                   </div>
                 </div>
               )}
