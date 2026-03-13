@@ -348,7 +348,7 @@ export default function ChatInterface() {
         try {
           if (currentChatId) {
             await updateDoc(doc(db, 'chats', currentChatId), {
-              messages: finalMessages,
+              messages: JSON.parse(JSON.stringify(finalMessages)),
               updatedAt: serverTimestamp()
             });
           } else {
@@ -358,7 +358,7 @@ export default function ChatInterface() {
               title: userMessage.content.slice(0, 30) || 'Percakapan Baru',
               createdAt: serverTimestamp(),
               updatedAt: serverTimestamp(),
-              messages: finalMessages
+              messages: JSON.parse(JSON.stringify(finalMessages))
             });
           }
         } catch (err) {
@@ -406,7 +406,7 @@ export default function ChatInterface() {
         try {
           if (currentChatId) {
             await updateDoc(doc(db, 'chats', currentChatId), {
-              messages: finalMessages,
+              messages: JSON.parse(JSON.stringify(finalMessages)),
               updatedAt: serverTimestamp()
             });
           } else {
@@ -416,7 +416,7 @@ export default function ChatInterface() {
               title: userMessage.content.slice(0, 30) || 'Percakapan Baru',
               createdAt: serverTimestamp(),
               updatedAt: serverTimestamp(),
-              messages: finalMessages
+              messages: JSON.parse(JSON.stringify(finalMessages))
             });
           }
         } catch (err) {
@@ -444,11 +444,11 @@ export default function ChatInterface() {
           title: userMessage.content.slice(0, 30) || 'Percakapan Baru',
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
-          messages: newMessages
+          messages: JSON.parse(JSON.stringify(newMessages))
         });
       } else {
         await updateDoc(doc(db, 'chats', activeChatId), {
-          messages: newMessages,
+          messages: JSON.parse(JSON.stringify(newMessages)),
           updatedAt: serverTimestamp()
         });
       }
@@ -516,11 +516,18 @@ export default function ChatInterface() {
           groundingChunks = chunk.candidates[0].groundingMetadata.groundingChunks;
         }
 
-        setMessages(prev => prev.map(msg => 
-          msg.id === assistantMessage.id 
-            ? { ...msg, content: fullText, groundingChunks: groundingChunks.length > 0 ? groundingChunks : undefined } 
-            : msg
-        ));
+        setMessages(prev => prev.map(msg => {
+          if (msg.id === assistantMessage.id) {
+            const updatedMsg = { ...msg, content: fullText };
+            if (groundingChunks.length > 0) {
+              updatedMsg.groundingChunks = groundingChunks;
+            } else {
+              delete updatedMsg.groundingChunks;
+            }
+            return updatedMsg;
+          }
+          return msg;
+        }));
       }
 
       // If stream was empty, still add the message
@@ -530,9 +537,13 @@ export default function ChatInterface() {
 
       // Save final AI message to Firestore
       if (activeChatId) {
-        const finalMessages = [...newMessages, { ...assistantMessage, content: fullText }];
+        const finalAssistantMessage = { ...assistantMessage, content: fullText };
+        if (groundingChunks.length > 0) {
+          finalAssistantMessage.groundingChunks = groundingChunks;
+        }
+        const finalMessages = [...newMessages, finalAssistantMessage];
         await updateDoc(doc(db, 'chats', activeChatId), {
-          messages: finalMessages,
+          messages: JSON.parse(JSON.stringify(finalMessages)),
           updatedAt: serverTimestamp()
         });
       }
