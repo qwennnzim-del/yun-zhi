@@ -220,6 +220,19 @@ export default function ChatInterface() {
         showToast('Ukuran file terlalu besar. Maksimal 20MB.');
         return;
       }
+
+      const supportedMimeTypes = [
+        'image/png', 'image/jpeg', 'image/webp', 'image/heic', 'image/heif',
+        'audio/wav', 'audio/mp3', 'audio/aiff', 'audio/aac', 'audio/ogg', 'audio/flac',
+        'video/mp4', 'video/mpeg', 'video/mov', 'video/avi', 'video/x-flv', 'video/mpg', 'video/webm', 'video/wmv', 'video/3gpp',
+        'application/pdf', 'text/plain', 'text/html', 'text/css', 'text/javascript', 'application/x-javascript', 'text/typescript', 'application/x-typescript', 'text/csv', 'text/markdown', 'text/x-python', 'application/x-python-code', 'application/json', 'text/xml', 'application/rtf', 'text/rtf'
+      ];
+
+      if (!file.type || !supportedMimeTypes.includes(file.type)) {
+        showToast('Format file tidak didukung oleh AI.');
+        return;
+      }
+
       setSelectedFile(file);
       if (file.type.startsWith('image/')) {
         const url = URL.createObjectURL(file);
@@ -482,10 +495,10 @@ export default function ChatInterface() {
         systemInstruction += " You are simulating an elite, expert-level AI model designed for complex problem-solving, advanced mathematics, and enterprise-grade coding. You must perform deep, rigorous reasoning before providing an answer. Break down complex problems into exhaustive steps, consider edge cases, and provide highly optimized, flawless solutions.";
       }
 
-      const contents = messages.filter(m => m.content.trim() || m.inlineData).map(m => {
+      const rawContents = messages.filter(m => m.content.trim() || m.inlineData).map(m => {
         const parts: any[] = [];
         if (m.inlineData) {
-          parts.push({ inlineData: m.inlineData });
+          parts.push({ inlineData: { mimeType: m.inlineData.mimeType, data: m.inlineData.data } });
         }
         if (m.content.trim()) {
           parts.push({ text: m.content });
@@ -500,9 +513,29 @@ export default function ChatInterface() {
       if (base64Data) {
         messageParts.push({ inlineData: { mimeType, data: base64Data } });
       }
-      messageParts.push({ text: userMessage.content });
+      if (userMessage.content.trim()) {
+        messageParts.push({ text: userMessage.content });
+      } else if (messageParts.length === 0) {
+        messageParts.push({ text: " " });
+      }
 
-      contents.push({ role: 'user', parts: messageParts });
+      rawContents.push({ role: 'user', parts: messageParts });
+
+      // Normalize contents to ensure alternating roles and no empty parts
+      const contents: any[] = [];
+      for (const content of rawContents) {
+        if (content.parts.length === 0) continue;
+        if (contents.length > 0 && contents[contents.length - 1].role === content.role) {
+          contents[contents.length - 1].parts.push(...content.parts);
+        } else {
+          contents.push({ role: content.role, parts: [...content.parts] });
+        }
+      }
+
+      // Ensure first message is from user
+      if (contents.length > 0 && contents[0].role === 'model') {
+        contents.unshift({ role: 'user', parts: [{ text: 'Hello' }] });
+      }
 
       const result = await genAI.models.generateContentStream({
         model: 'gemini-2.5-flash', // Always use 2.5 flash under the hood
