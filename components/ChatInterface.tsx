@@ -537,12 +537,15 @@ export default function ChatInterface() {
         contents.unshift({ role: 'user', parts: [{ text: 'Hello' }] });
       }
 
+      const hasInlineData = contents.some(c => c.parts.some((p: any) => p.inlineData));
+      const shouldEnableSearch = isSearchEnabled && !hasInlineData;
+
       const result = await genAI.models.generateContentStream({
         model: 'gemini-2.5-flash', // Always use 2.5 flash under the hood
         contents: contents,
         config: {
           systemInstruction: systemInstruction,
-          ...(isSearchEnabled ? { tools: [{ googleSearch: {} }] } : {})
+          ...(shouldEnableSearch ? { tools: [{ googleSearch: {} }] } : {})
         }
       });
       
@@ -994,30 +997,30 @@ export default function ChatInterface() {
                         message.role === 'user' ? 'prose-zinc text-zinc-800 text-right' : 'prose-zinc text-zinc-800'
                       }`}>
                         {message.attachmentUrl && message.attachmentUrl !== 'file' && message.attachmentUrl !== 'video' && (
-                          <div className={`mb-3 ${message.role === 'user' ? 'flex justify-end' : 'flex justify-start'}`}>
+                          <div className={`mb-2 ${message.role === 'user' ? 'flex justify-end' : 'flex justify-start'}`}>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={message.attachmentUrl} alt="Attachment" className="max-w-[200px] rounded-2xl border border-zinc-200 shadow-sm" />
+                            <img src={message.attachmentUrl} alt="Attachment" className="max-w-[140px] h-auto object-cover rounded-xl border border-zinc-200 shadow-sm" />
                           </div>
                         )}
                         {message.attachmentUrl === 'file' && (
-                          <div className={`mb-3 flex items-center gap-3 p-3 rounded-2xl border border-zinc-200 bg-zinc-50 shadow-sm max-w-[250px] ${message.role === 'user' ? 'ml-auto' : 'mr-auto'}`}>
-                            <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
-                              <FileIcon size={20} className="text-indigo-600" />
+                          <div className={`mb-2 flex items-center gap-2.5 p-2 pr-4 rounded-xl border border-zinc-200 bg-white shadow-sm w-fit ${message.role === 'user' ? 'ml-auto' : 'mr-auto'}`}>
+                            <div className="w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center shrink-0">
+                              <FileIcon size={16} className="text-zinc-600" />
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-zinc-900 truncate">Dokumen Terlampir</p>
-                              <p className="text-xs text-zinc-500">File</p>
+                            <div className="flex flex-col">
+                              <span className="text-xs font-semibold text-zinc-800">Dokumen</span>
+                              <span className="text-[10px] text-zinc-500">File Terlampir</span>
                             </div>
                           </div>
                         )}
                         {message.attachmentUrl === 'video' && (
-                          <div className={`mb-3 flex items-center gap-3 p-3 rounded-2xl border border-zinc-200 bg-zinc-50 shadow-sm max-w-[250px] ${message.role === 'user' ? 'ml-auto' : 'mr-auto'}`}>
-                            <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
-                              <Video size={20} className="text-indigo-600" />
+                          <div className={`mb-2 flex items-center gap-2.5 p-2 pr-4 rounded-xl border border-zinc-200 bg-white shadow-sm w-fit ${message.role === 'user' ? 'ml-auto' : 'mr-auto'}`}>
+                            <div className="w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center shrink-0">
+                              <Video size={16} className="text-zinc-600" />
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-zinc-900 truncate">Video Terlampir</p>
-                              <p className="text-xs text-zinc-500">Video</p>
+                            <div className="flex flex-col">
+                              <span className="text-xs font-semibold text-zinc-800">Video</span>
+                              <span className="text-[10px] text-zinc-500">Video Terlampir</span>
                             </div>
                           </div>
                         )}
@@ -1218,23 +1221,23 @@ export default function ChatInterface() {
                 <div className="px-3 pt-2 pb-2">
                   <div className="relative inline-block">
                     {filePreview === 'file' ? (
-                      <div className="h-16 w-16 rounded-xl border border-zinc-200 shadow-sm bg-indigo-50 flex items-center justify-center">
-                        <FileIcon size={24} className="text-indigo-500" />
+                      <div className="h-12 w-12 rounded-lg border border-zinc-200 shadow-sm bg-zinc-50 flex items-center justify-center">
+                        <FileIcon size={20} className="text-zinc-500" />
                       </div>
                     ) : filePreview === 'video' ? (
-                      <div className="h-16 w-16 rounded-xl border border-zinc-200 shadow-sm bg-indigo-50 flex items-center justify-center">
-                        <Video size={24} className="text-indigo-500" />
+                      <div className="h-12 w-12 rounded-lg border border-zinc-200 shadow-sm bg-zinc-50 flex items-center justify-center">
+                        <Video size={20} className="text-zinc-500" />
                       </div>
                     ) : (
                       /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src={filePreview} alt="Preview" className="h-16 w-16 object-cover rounded-xl border border-zinc-200 shadow-sm" />
+                      <img src={filePreview} alt="Preview" className="h-12 w-12 object-cover rounded-lg border border-zinc-200 shadow-sm" />
                     )}
                     <button
                       type="button"
                       onClick={removeFile}
                       className="absolute -top-2 -right-2 bg-zinc-800 text-white rounded-full p-1 hover:bg-zinc-700 shadow-sm"
                     >
-                      <X size={12} />
+                      <X size={10} />
                     </button>
                   </div>
                 </div>
